@@ -1,0 +1,133 @@
+import datetime
+import uuid
+
+import fastapi
+import pydantic
+from fastapi_app import response
+
+from presentation.api import security
+from presentation.api.schemas import (
+    requests as requests_schema,
+    responses as responses_schema,
+)
+
+router = fastapi.APIRouter(prefix="/feeds")
+
+
+@router.post(
+    "",
+    status_code=fastapi.status.HTTP_201_CREATED,
+    description="Post feed",
+)
+async def post_feed(
+    body: requests_schema.PostFeed = fastapi.Body(...),
+    account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+) -> response.Response[responses_schema.Feed]:
+    return response.Response(
+        result=responses_schema.Feed(
+            uuid=uuid.uuid4(),
+            account_id=account_id,
+            created_at=datetime.datetime.now(),
+            updated_at=None,
+            text=body.text,
+            images=[
+                responses_schema.OrderedImage(
+                    image=responses_schema.Image(
+                        id=image_uuid,
+                        url="https://example.com/image.jpg",
+                        blurhash="",
+                    ),
+                    order=i,
+                )
+                for i, image_uuid in enumerate(body.images)
+            ],
+            likes_count=0,
+            views_count=0,
+        ),
+    )
+
+
+@router.get(
+    "",
+    status_code=fastapi.status.HTTP_200_OK,
+    description="Get feeds",
+)
+async def get_feeds(
+    feed_id: list[pydantic.UUID4] = fastapi.Query(
+        min_length=1,
+        max_length=100,
+    ),
+    _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+) -> response.Response[responses_schema.Feeds]:
+    return response.Response[responses_schema.Feeds](
+        result=responses_schema.Feeds(
+            items=[
+                responses_schema.Feed(
+                    uuid=_id,
+                    account_id="",
+                    created_at=datetime.datetime.now(),
+                    updated_at=None,
+                    text="",
+                    images=[
+                        responses_schema.OrderedImage(
+                            image=responses_schema.Image(
+                                id=uuid.uuid4(),
+                                url="https://example.com/image.jpg",
+                                blurhash="",
+                            ),
+                            order=0,
+                        ),
+                    ],
+                    likes_count=0,
+                    views_count=0,
+                )
+                for _id in feed_id
+            ],
+        ),
+    )
+
+
+@router.patch(
+    "/{feed_id}",
+    status_code=fastapi.status.HTTP_200_OK,
+    description="Update feed",
+)
+async def patch_feed(
+    feed_id: pydantic.UUID4 = fastapi.Path(...),
+    body: requests_schema.UpdateFeed = fastapi.Body(...),
+    account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+) -> response.Response[responses_schema.Feed]:
+    return response.Response(
+        result=responses_schema.Feed(
+            uuid=feed_id,
+            account_id=account_id,
+            created_at=datetime.datetime.now(),
+            updated_at=datetime.datetime.now(),
+            text=body.text,
+            images=[
+                responses_schema.OrderedImage(
+                    image=responses_schema.Image(
+                        id=image_uuid,
+                        url="https://example.com/image.jpg",
+                        blurhash="",
+                    ),
+                    order=i,
+                )
+                for i, image_uuid in enumerate(body.images)
+            ],
+            likes_count=0,
+            views_count=0,
+        ),
+    )
+
+
+@router.delete(
+    "/{feed_id}",
+    status_code=fastapi.status.HTTP_204_NO_CONTENT,
+    description="Delete feed",
+)
+async def delete_feed(
+    feed_id: pydantic.UUID4 = fastapi.Path(...),
+    account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+) -> None:
+    pass
