@@ -35,7 +35,7 @@ async def post_feed(
             images=[
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
-                        id=image_uuid,
+                        uuid=image_uuid,
                         url="https://example.com/image.jpg",
                         blurhash="",
                     ),
@@ -74,7 +74,7 @@ async def get_feeds(
                     images=[
                         responses_schema.OrderedImage(
                             image=responses_schema.Image(
-                                id=uuid.uuid4(),
+                                uuid=uuid.uuid4(),
                                 url="https://example.com/image.jpg",
                                 blurhash="",
                             ),
@@ -133,7 +133,7 @@ async def patch_feed(
             images=[
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
-                        id=image_uuid,
+                        uuid=image_uuid,
                         url="https://example.com/image.jpg",
                         blurhash="",
                     ),

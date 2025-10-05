@@ -21,7 +21,7 @@ async def upload_image(
 ) -> response.Response[responses_schema.Image]:
     return response.Response(
         result=responses_schema.Image(
-            id=uuid.uuid4(),
+            uuid=uuid.uuid4(),
             url="https://example.com/image.jpg",
             blurhash="",
         ),
