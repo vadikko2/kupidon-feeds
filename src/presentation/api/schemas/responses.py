@@ -19,6 +19,7 @@ class Feed(pydantic.BaseModel):
     uuid: pydantic.UUID4 = pydantic.Field(description="Feed id")
 
     account_id: pydantic.StrictStr = pydantic.Field(description="Account id")
+    has_followed: pydantic.StrictBool = pydantic.Field(description="Has followed")
 
     created_at: pydantic.NaiveDatetime = pydantic.Field(description="Created at")
     updated_at: pydantic.NaiveDatetime | None = pydantic.Field(description="Updated at")

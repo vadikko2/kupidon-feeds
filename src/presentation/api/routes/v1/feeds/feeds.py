@@ -28,6 +28,7 @@ async def post_feed(
         result=responses_schema.Feed(
             uuid=uuid.uuid4(),
             account_id=account_id,
+            has_followed=False,
             created_at=datetime.datetime.now(),
             updated_at=None,
             text=body.text,
@@ -66,6 +67,7 @@ async def get_feeds(
                 responses_schema.Feed(
                     uuid=_id,
                     account_id="",
+                    has_followed=False,
                     created_at=datetime.datetime.now(),
                     updated_at=None,
                     text="",
@@ -124,6 +126,7 @@ async def patch_feed(
         result=responses_schema.Feed(
             uuid=feed_id,
             account_id=account_id,
+            has_followed=False,
             created_at=datetime.datetime.now(),
             updated_at=datetime.datetime.now(),
             text=body.text,
