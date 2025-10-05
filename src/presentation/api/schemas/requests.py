@@ -18,5 +18,5 @@ class FollowAccount(pydantic.BaseModel):
     account_id: pydantic.StrictStr = pydantic.Field(description="Account id")
 
 
-class ViewFeed(pydantic.BaseModel):
-    feed_id: pydantic.UUID4 = pydantic.Field(description="Feed id")
+class ViewFeeds(pydantic.BaseModel):
+    feed_ids: list[pydantic.UUID4] = pydantic.Field(description="Feed id", min_length=1)
