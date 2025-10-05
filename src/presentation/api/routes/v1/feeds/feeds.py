@@ -84,8 +84,8 @@ async def get_feeds(
                         )
                         for _ in range(random.randint(1, 10))
                     ],
-                    likes_count=0,
-                    views_count=0,
+                    likes_count=random.randint(0, 1_000_000),
+                    views_count=random.randint(0, 1_000_000),
                 )
                 for _id in feed_id
             ],
@@ -144,8 +144,8 @@ async def patch_feed(
                 )
                 for i, image_uuid in enumerate(body.images)
             ],
-            likes_count=0,
-            views_count=0,
+            likes_count=random.randint(0, 1_000_000),
+            views_count=random.randint(0, 1_000_000),
         ),
     )
 
