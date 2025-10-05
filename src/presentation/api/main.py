@@ -7,6 +7,7 @@ from fastapi_app import logging as fastapi_logging
 
 import settings
 from presentation.api import routes
+from presentation.api.routes import healthcheck
 
 dotenv.load_dotenv()
 
@@ -39,6 +40,7 @@ app = fastapi_app.create(
     env_title=app_settings.ENV,
     query_routers=[
         routes.api_router,
+        healthcheck.router,
     ],
     exception_handlers=[],
     cors_enable=True,

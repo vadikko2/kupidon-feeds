@@ -15,7 +15,7 @@ router = fastapi.APIRouter()
 
 
 @router.get(
-    "/healthcheck",
+    "/",
     status_code=fastapi.status.HTTP_200_OK,
     response_model=healthcheck_response.Healthcheck,
     responses={
