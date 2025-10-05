@@ -1,4 +1,5 @@
 import datetime
+import random
 import uuid
 
 import fastapi
@@ -36,8 +37,8 @@ async def post_feed(
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
                         uuid=image_uuid,
-                        url="https://example.com/image.jpg",
-                        blurhash="",
+                        url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
+                        blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
                     ),
                     order=i,
                 )
@@ -66,20 +67,22 @@ async def get_feeds(
             items=[
                 responses_schema.Feed(
                     uuid=_id,
-                    account_id="",
+                    account_id=f"fake-account-{random.randint(1, 10_000)}",
                     has_followed=False,
-                    created_at=datetime.datetime.now(),
+                    created_at=datetime.datetime.now()
+                    - datetime.timedelta(days=random.randint(1, 3_000)),
                     updated_at=None,
                     text="",
                     images=[
                         responses_schema.OrderedImage(
                             image=responses_schema.Image(
                                 uuid=uuid.uuid4(),
-                                url="https://example.com/image.jpg",
-                                blurhash="",
+                                url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
+                                blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
                             ),
                             order=0,
-                        ),
+                        )
+                        for _ in range(random.randint(1, 10))
                     ],
                     likes_count=0,
                     views_count=0,
@@ -134,8 +137,8 @@ async def patch_feed(
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
                         uuid=image_uuid,
-                        url="https://example.com/image.jpg",
-                        blurhash="",
+                        url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
+                        blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
                     ),
                     order=i,
                 )
