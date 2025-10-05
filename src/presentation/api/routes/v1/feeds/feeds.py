@@ -68,7 +68,7 @@ async def get_feeds(
                 responses_schema.Feed(
                     uuid=_id,
                     account_id=f"fake-account-{random.randint(1, 10_000)}",
-                    has_followed=False,
+                    has_followed=bool(random.randint(0, 1)),
                     created_at=datetime.datetime.now()
                     - datetime.timedelta(days=random.randint(1, 3_000)),
                     updated_at=None,
@@ -107,7 +107,31 @@ async def get_account_feeds(
     return response.Response[pagination.Pagination[responses_schema.Feed]](
         result=pagination.Pagination(
             url="",
-            base_items=[],
+            base_items=[
+                responses_schema.Feed(
+                    uuid=uuid.uuid4(),
+                    account_id=account_id,
+                    has_followed=bool(random.randint(0, 1)),
+                    created_at=datetime.datetime.now()
+                    - datetime.timedelta(days=random.randint(1, 3_000)),
+                    updated_at=None,
+                    text="",
+                    images=[
+                        responses_schema.OrderedImage(
+                            image=responses_schema.Image(
+                                uuid=uuid.uuid4(),
+                                url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
+                                blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
+                            ),
+                            order=0,
+                        )
+                        for _ in range(random.randint(1, 10))
+                    ],
+                    likes_count=random.randint(0, 1_000_000),
+                    views_count=random.randint(0, 1_000_000),
+                )
+                for _ in range(limit)
+            ],
             limit=limit,
             offset=offset,
             count=0,
@@ -129,8 +153,9 @@ async def patch_feed(
         result=responses_schema.Feed(
             uuid=feed_id,
             account_id=account_id,
-            has_followed=False,
-            created_at=datetime.datetime.now(),
+            has_followed=bool(random.randint(0, 1)),
+            created_at=datetime.datetime.now()
+            - datetime.timedelta(days=random.randint(1, 3_000)),
             updated_at=datetime.datetime.now(),
             text=body.text,
             images=[
