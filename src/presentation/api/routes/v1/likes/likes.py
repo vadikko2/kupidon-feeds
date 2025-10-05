@@ -7,7 +7,7 @@ from fastapi_app import response
 from presentation.api import security
 from presentation.api.schemas import pagination, responses as responses_schema
 
-router = fastapi.APIRouter(prefix="/likes")
+router = fastapi.APIRouter(prefix="/feeds/likes")
 
 
 @router.post(

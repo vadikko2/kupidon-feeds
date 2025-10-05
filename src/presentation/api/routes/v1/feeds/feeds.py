@@ -7,6 +7,7 @@ from fastapi_app import response
 
 from presentation.api import security
 from presentation.api.schemas import (
+    pagination,
     requests as requests_schema,
     responses as responses_schema,
 )
@@ -83,6 +84,28 @@ async def get_feeds(
                 )
                 for _id in feed_id
             ],
+        ),
+    )
+
+
+@router.get(
+    "/{account_id}",
+    status_code=fastapi.status.HTTP_200_OK,
+    description="Get account feeds",
+)
+async def get_account_feeds(
+    account_id: pydantic.StrictStr = fastapi.Path(...),
+    _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
+    offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
+) -> response.Response[pagination.Pagination[responses_schema.Feed]]:
+    return response.Response[pagination.Pagination[responses_schema.Feed]](
+        result=pagination.Pagination(
+            url="",
+            base_items=[],
+            limit=limit,
+            offset=offset,
+            count=0,
         ),
     )
 
