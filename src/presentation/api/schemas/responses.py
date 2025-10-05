@@ -36,6 +36,11 @@ class Feed(pydantic.BaseModel):
         default=0,
     )
 
+    @pydantic.computed_field()
+    @property
+    def images_count(self) -> pydantic.NonNegativeInt:
+        return len(self.images)
+
 
 class Feeds(pydantic.BaseModel):
     items: list[Feed] = pydantic.Field(description="Feeds", default_factory=list)
