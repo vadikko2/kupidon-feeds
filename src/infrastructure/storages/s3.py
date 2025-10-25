@@ -11,6 +11,8 @@ logging.getLogger("botocore").setLevel(logging.ERROR)
 logging.getLogger("s3transfer").setLevel(logging.ERROR)
 logging.getLogger("boto3").setLevel(logging.ERROR)
 
+logger = logging.getLogger(__name__)
+
 
 class S3ImagesStorage(images_storage.ImagesStorage):
     def __init__(self):
@@ -44,6 +46,7 @@ class S3ImagesStorage(images_storage.ImagesStorage):
         image_io = io.BytesIO(image.image)
         image_io.seek(0)
         s3.upload_fileobj(image_io, self.bucket_name, full_filename)
+        logger.debug(f"New image {image.filename} uploaded")
         return self._generate_download_url(full_filename)
 
     async def upload(self, *image: images_storage.Image) -> list[str]:

@@ -4,7 +4,7 @@ import pydantic
 class Image(pydantic.BaseModel):
     uuid: pydantic.UUID4 = pydantic.Field(description="Image id")
     url: pydantic.StrictStr = pydantic.Field(description="Download image url")
-    blurhash: pydantic.StrictStr = pydantic.Field(description="Blurhash")
+    blurhash: pydantic.StrictStr | None = pydantic.Field(description="Blurhash")
 
 
 class OrderedImage(pydantic.BaseModel):

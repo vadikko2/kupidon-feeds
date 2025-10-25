@@ -2,50 +2,84 @@ import datetime
 import random
 import uuid
 
+import cqrs
 import fastapi
 import pydantic
 from fastapi_app import response
+from fastapi_app.exception_handlers import registry
 
+from presentation import dependencies
 from presentation.api import security
 from presentation.api.schemas import (
     pagination,
     requests as requests_schema,
     responses as responses_schema,
 )
+from service import exceptions as service_exceptions
+from service.models.commands import post_feed as post_feed_model
 
 router = fastapi.APIRouter(prefix="/feeds")
+
+print(
+    registry.get_exception_responses(
+        service_exceptions.FeedAlreadyExists,
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.ImageAlreadyBoundToFeed,
+        service_exceptions.ImageNotFound,
+    ),
+)
 
 
 @router.post(
     "",
     status_code=fastapi.status.HTTP_201_CREATED,
-    description="Post feed",
+    responses=registry.get_exception_responses(
+        service_exceptions.FeedAlreadyExists,
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.ImageAlreadyBoundToFeed,
+        service_exceptions.ImageNotFound,
+    ),
 )
 async def post_feed(
     body: requests_schema.PostFeed = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[responses_schema.Feed]:
+    """
+    # Create feed
+    """
+    result: post_feed_model.PostFeedResponse = await mediator.send(
+        post_feed_model.PostFeed(
+            account_id=account_id,
+            text=body.text,
+            images=body.images,
+        ),
+    )
     return response.Response(
         result=responses_schema.Feed(
-            uuid=uuid.uuid4(),
+            uuid=result.feed.feed_id,
             account_id=account_id,
             has_followed=False,
-            created_at=datetime.datetime.now(),
-            updated_at=None,
+            created_at=result.feed.created_at,
+            updated_at=result.feed.updated_at,
             text=body.text,
             images=[
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
-                        uuid=image_uuid,
-                        url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
-                        blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
+                        uuid=image.image_id,
+                        url=image.url,
+                        blurhash=image.blurhash,
                     ),
-                    order=i,
+                    order=image.order,
                 )
-                for i, image_uuid in enumerate(body.images)
+                for image in result.feed.images
             ],
-            likes_count=0,
-            views_count=0,
+            likes_count=result.feed.likes_count,
+            views_count=result.feed.views_count,
         ),
     )
 

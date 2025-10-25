@@ -6,7 +6,7 @@ import fastapi_app
 from fastapi_app import logging as fastapi_logging
 
 import settings
-from presentation.api import routes
+from presentation.api import errors, routes
 from presentation.api.routes import healthcheck
 
 dotenv.load_dotenv()
@@ -42,7 +42,7 @@ app = fastapi_app.create(
         routes.api_router,
         healthcheck.router,
     ],
-    exception_handlers=[],
+    exception_handlers=errors.handlers,
     cors_enable=True,
     log_config=log_config,
 )
