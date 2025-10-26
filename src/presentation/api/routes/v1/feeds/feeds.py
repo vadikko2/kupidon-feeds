@@ -17,6 +17,7 @@ from presentation.api.schemas import (
 )
 from service import exceptions as service_exceptions
 from service.models.commands.feeds import (
+    delete_feed as delete_feed_model,
     post_feed as post_feed_model,
     update_feed as update_feed_model,
 )
@@ -246,9 +247,26 @@ async def patch_feed(
     "/{feed_id}",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     description="Delete feed",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.FeedNotFound,
+        service_exceptions.UserDoesNotOwnFeed,
+    ),
 )
 async def delete_feed(
     feed_id: pydantic.UUID4 = fastapi.Path(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> None:
-    pass
+    """
+    # Delete feed
+    """
+    await mediator.send(
+        delete_feed_model.DeleteFeed(
+            feed_id=feed_id,
+            account_id=account_id,
+        ),
+    )

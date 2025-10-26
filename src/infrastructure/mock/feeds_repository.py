@@ -77,3 +77,22 @@ class RedisFeedsRepository(feeds_repository.IFeedsRepository):
         feed_ids_coroutine = await self.pipeline.scard(account_feeds_key)  # pyright: ignore[reportGeneralTypeIssues]
         feed_ids = (await feed_ids_coroutine.execute())[0]  # pyright: ignore[reportAttributeAccessIssue]
         return feed_ids
+
+    async def delete(self, feed_id: uuid.UUID) -> None:
+        key = self.FEED_KEY_PATTERN.format(feed_id=feed_id)
+        feed_coroutine = await self.pipeline.get(key)
+        feed_bytes = (await feed_coroutine.execute())[0]
+        if not feed_bytes:
+            return
+
+        feed = feed_entity.Feed.model_validate(orjson.loads(feed_bytes))
+        account_id = feed.account_id
+        account_feeds_key = self.ACCOUNT_FEEDS_KEY_PATTERN.format(account_id=account_id)
+        srem_coroutine = await self.pipeline.srem(  # pyright: ignore[reportGeneralTypeIssues]
+            account_feeds_key,
+            str(feed_id),
+        )
+        _ = (await srem_coroutine.execute())[0]  # pyright: ignore[reportAttributeAccessIssue]
+
+        delete_coroutine = await self.pipeline.delete(key)
+        _ = (await delete_coroutine.execute())[0]

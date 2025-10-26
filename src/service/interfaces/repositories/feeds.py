@@ -40,3 +40,7 @@ class IFeedsRepository(abc.ABC):
         Returns account feeds count
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    async def delete(self, feed_id: uuid.UUID) -> None:
+        raise NotImplementedError
