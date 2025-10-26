@@ -20,8 +20,23 @@ class IFeedsRepository(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     async def get_by_id(self, feed_id: uuid.UUID) -> feed_entity.Feed | None:
         """
         Returns feed by id
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_account_feeds(self, account_id: str) -> list[feed_entity.Feed]:
+        """
+        Returns account feeds
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def count_feeds(self, account_id: str) -> int:
+        """
+        Returns account feeds count
         """
         raise NotImplementedError

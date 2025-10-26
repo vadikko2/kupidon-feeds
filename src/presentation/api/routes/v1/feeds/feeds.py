@@ -17,18 +17,9 @@ from presentation.api.schemas import (
 )
 from service import exceptions as service_exceptions
 from service.models.commands import post_feed as post_feed_model
+from service.models.queries import get_feeds as get_feeds_model
 
 router = fastapi.APIRouter(prefix="/feeds")
-
-print(
-    registry.get_exception_responses(
-        service_exceptions.FeedAlreadyExists,
-        service_exceptions.GetUserIdError,
-        service_exceptions.UnauthorizedError,
-        service_exceptions.ImageAlreadyBoundToFeed,
-        service_exceptions.ImageNotFound,
-    ),
-)
 
 
 @router.post(
@@ -131,44 +122,58 @@ async def get_feeds(
     "/{account_id}",
     status_code=fastapi.status.HTTP_200_OK,
     description="Get account feeds",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+    ),
 )
 async def get_account_feeds(
     account_id: pydantic.StrictStr = fastapi.Path(...),
     _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[pagination.Pagination[responses_schema.Feed]]:
+    result: get_feeds_model.GetAccountFeedsResponse = await mediator.send(
+        get_feeds_model.GetAccountFeeds(
+            account_id=account_id,
+            limit=limit,
+            offset=offset,
+        ),
+    )
+
     return response.Response[pagination.Pagination[responses_schema.Feed]](
-        result=pagination.Pagination(
+        result=pagination.Pagination[responses_schema.Feed](
             url="",
             base_items=[
                 responses_schema.Feed(
-                    uuid=uuid.uuid4(),
+                    uuid=feed.feed_id,
                     account_id=account_id,
-                    has_followed=bool(random.randint(0, 1)),
-                    created_at=datetime.datetime.now()
-                    - datetime.timedelta(days=random.randint(1, 3_000)),
-                    updated_at=None,
-                    text="",
+                    has_followed=feed.has_followed,
+                    created_at=feed.created_at,
+                    updated_at=feed.updated_at,
+                    text=feed.text,
                     images=[
                         responses_schema.OrderedImage(
                             image=responses_schema.Image(
-                                uuid=uuid.uuid4(),
-                                url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
-                                blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
+                                uuid=image.image_id,
+                                url=image.url,
+                                blurhash=image.blurhash,
                             ),
-                            order=0,
+                            order=image.order,
                         )
-                        for _ in range(random.randint(1, 10))
+                        for image in feed.images
                     ],
-                    likes_count=random.randint(0, 1_000_000),
-                    views_count=random.randint(0, 1_000_000),
+                    likes_count=feed.likes_count,
+                    views_count=feed.views_count,
                 )
-                for _ in range(limit)
+                for feed in result.feeds
             ],
             limit=limit,
             offset=offset,
-            count=0,
+            count=result.total_count,
         ),
     )
 

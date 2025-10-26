@@ -12,14 +12,6 @@ from service.models.commands import upload_image as upload_image_model
 
 router = fastapi.APIRouter(prefix="/feeds/images")
 
-print(
-    registry.get_exception_responses(
-        service_exceptions.GetUserIdError,
-        service_exceptions.UnauthorizedError,
-        service_exceptions.ImageAlreadyExists,
-    ),
-)
-
 
 @router.post(
     "",
