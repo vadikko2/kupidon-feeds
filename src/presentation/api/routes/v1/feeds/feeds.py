@@ -16,8 +16,11 @@ from presentation.api.schemas import (
     responses as responses_schema,
 )
 from service import exceptions as service_exceptions
-from service.models.commands import post_feed as post_feed_model
-from service.models.queries import get_feeds as get_feeds_model
+from service.models.commands.feeds import (
+    post_feed as post_feed_model,
+    update_feed as update_feed_model,
+)
+from service.models.queries.feeds import get_feeds as get_feeds_model
 
 router = fastapi.APIRouter(prefix="/feeds")
 
@@ -87,6 +90,9 @@ async def get_feeds(
     ),
     _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
 ) -> response.Response[responses_schema.Feeds]:
+    """
+    # Get feeds by ids
+    """
     return response.Response[responses_schema.Feeds](
         result=responses_schema.Feeds(
             items=[
@@ -136,6 +142,9 @@ async def get_account_feeds(
         dependencies.request_mediator_factory,
     ),
 ) -> response.Response[pagination.Pagination[responses_schema.Feed]]:
+    """
+    # Get account feeds
+    """
     result: get_feeds_model.GetAccountFeedsResponse = await mediator.send(
         get_feeds_model.GetAccountFeeds(
             account_id=account_id,
@@ -182,34 +191,53 @@ async def get_account_feeds(
     "/{feed_id}",
     status_code=fastapi.status.HTTP_200_OK,
     description="Update feed",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.FeedNotFound,
+        service_exceptions.UserDoesNotOwnFeed,
+    ),
 )
 async def patch_feed(
     feed_id: pydantic.UUID4 = fastapi.Path(...),
     body: requests_schema.UpdateFeed = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[responses_schema.Feed]:
+    """
+    # Update feed
+    """
+    result: update_feed_model.UpdateFeedResponse = await mediator.send(
+        update_feed_model.UpdateFeed(
+            feed_id=feed_id,
+            account_id=account_id,
+            text=body.text,
+            images=body.images,
+        ),
+    )
     return response.Response(
         result=responses_schema.Feed(
-            uuid=feed_id,
-            account_id=account_id,
-            has_followed=bool(random.randint(0, 1)),
-            created_at=datetime.datetime.now()
-            - datetime.timedelta(days=random.randint(1, 3_000)),
-            updated_at=datetime.datetime.now(),
+            uuid=result.feed.feed_id,
+            account_id=result.feed.account_id,
+            has_followed=result.feed.has_followed,
+            created_at=result.feed.created_at,
+            updated_at=result.feed.updated_at,
             text=body.text,
             images=[
                 responses_schema.OrderedImage(
                     image=responses_schema.Image(
-                        uuid=image_uuid,
-                        url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
-                        blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
+                        uuid=image.image_id,
+                        url=image.url,
+                        blurhash=image.blurhash,
                     ),
-                    order=i,
+                    order=image.order,
                 )
-                for i, image_uuid in enumerate(body.images)
+                for image in result.feed.images
             ],
-            likes_count=random.randint(0, 1_000_000),
-            views_count=random.randint(0, 1_000_000),
+            likes_count=result.feed.likes_count,
+            views_count=result.feed.views_count,
         ),
     )
 

@@ -7,8 +7,7 @@ from cqrs.events import event
 from domain.entities import feed as feed_entities
 from service import exceptions
 from service.interfaces import unit_of_work
-from service.interfaces.storages import images_storage as images_storage_interface
-from service.models.commands import post_feed
+from service.models.commands.feeds import post_feed
 
 
 class PostFeedHandler(
@@ -16,10 +15,8 @@ class PostFeedHandler(
 ):
     def __init__(
         self,
-        image_storage: images_storage_interface.ImagesStorage,
         uow: unit_of_work.UoW,
     ):
-        self.image_storage = image_storage
         self.uow = uow
         self._events = []
 

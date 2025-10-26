@@ -8,7 +8,7 @@ from presentation import dependencies
 from presentation.api import security
 from presentation.api.schemas import responses as responses_schema
 from service import exceptions as service_exceptions
-from service.models.commands import upload_image as upload_image_model
+from service.models.commands.images import upload_image as upload_image_model
 
 router = fastapi.APIRouter(prefix="/feeds/images")
 

@@ -24,3 +24,9 @@ class Image(pydantic.BaseModel):
             raise ValueError("Image already bound to feed")
 
         self.feed_id = feed_id
+
+    def unbound_from_feed(self):
+        if self.feed_id is None:
+            raise ValueError("Image not bound to feed")
+
+        self.feed_id = None

@@ -9,7 +9,7 @@ from domain.entities import images as images_entity
 from service.helpers.image import blurhash, transcode
 from service.interfaces import unit_of_work
 from service.interfaces.storages import images_storage as images_storage_interface
-from service.models.commands import upload_image
+from service.models.commands.images import upload_image
 
 
 class UploadImageHandler(

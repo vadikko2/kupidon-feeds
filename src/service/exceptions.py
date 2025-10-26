@@ -16,6 +16,11 @@ class FeedAlreadyExists(Exception):
         super().__init__(f"Feed with id {feed_id} already exists")
 
 
+class FeedNotFound(Exception):
+    def __init__(self, feed_id: uuid.UUID):
+        super().__init__(f"Feed with id {feed_id} not found")
+
+
 class ImageAlreadyExists(Exception):
     def __init__(self, image_id: uuid.UUID):
         super().__init__(f"Image with id {image_id} already exists")
@@ -29,3 +34,10 @@ class ImageNotFound(Exception):
 class ImageAlreadyBoundToFeed(Exception):
     def __init__(self, image_id: uuid.UUID, feed_id: uuid.UUID):
         super().__init__(f"Image with id {image_id} already bound to feed {feed_id}")
+
+
+class UserDoesNotOwnFeed(Exception):
+    def __init__(self, account_id: str, feed_id: uuid.UUID):
+        super().__init__(
+            f"Feed with id {feed_id} does not belong to the user {account_id}",
+        )

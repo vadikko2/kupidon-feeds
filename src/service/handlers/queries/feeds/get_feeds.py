@@ -4,7 +4,7 @@ import cqrs
 from cqrs.events import event
 
 from service.interfaces import unit_of_work
-from service.models.queries import get_feeds
+from service.models.queries.feeds import get_feeds
 
 
 class GetAccountFeedsHandler(

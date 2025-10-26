@@ -38,10 +38,18 @@ class RedisFeedsRepository(feeds_repository.IFeedsRepository):
         _ = (await coroutine.execute())[0]  # pyright: ignore[reportAttributeAccessIssue]
 
     async def update(self, feed: feed_entity.Feed) -> None:
-        pass
+        key = self.FEED_KEY_PATTERN.format(feed_id=feed.feed_id)
+        coroutine = await self.pipeline.set(key, orjson.dumps(feed.model_dump()))
+        _ = (await coroutine.execute())[0]  # pyright: ignore[reportAttributeAccessIssue]
 
     async def get_by_id(self, feed_id: uuid.UUID) -> feed_entity.Feed | None:
-        pass
+        key = self.FEED_KEY_PATTERN.format(feed_id=feed_id)
+        existed_coroutine = await self.pipeline.get(key)
+        existed = (await existed_coroutine.execute())[0]
+        if not existed:
+            return None
+
+        return feed_entity.Feed.model_validate(orjson.loads(existed))
 
     async def get_account_feeds(self, account_id: str) -> list[feed_entity.Feed]:
         account_feeds_key = self.ACCOUNT_FEEDS_KEY_PATTERN.format(account_id=account_id)
@@ -62,7 +70,7 @@ class RedisFeedsRepository(feeds_repository.IFeedsRepository):
             feed = feed_entity.Feed.model_validate(orjson.loads(feed_bytes))
             feeds.append(feed)
 
-        return feeds
+        return sorted(feeds, key=lambda feed: feed.created_at, reverse=True)
 
     async def count_feeds(self, account_id: str) -> int:
         account_feeds_key = self.ACCOUNT_FEEDS_KEY_PATTERN.format(account_id=account_id)
