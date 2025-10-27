@@ -33,6 +33,8 @@ class PostFeedHandler(
                 difference = set(request.images) - set([im.image_id for im in images])
                 raise exceptions.ImageNotFound(image_id=difference.pop())
 
+            updated_images = []
+
             for image in images:
                 if image.uploader != request.account_id:
                     raise exceptions.ImageNotFound(image_id=image.image_id)
@@ -41,7 +43,7 @@ class PostFeedHandler(
                         image_id=image.image_id,
                         feed_id=image.feed_id,
                     )
-                image.bound_to_feed(new_feed_id)
+                updated_images.append(image.bound_to_feed(new_feed_id))
 
             new_post = feed_entities.Feed(
                 feed_id=uuid.uuid4(),
@@ -51,7 +53,7 @@ class PostFeedHandler(
                 images=images,
             )
             await self.uow.feeds_repository.add(new_post)
-            await self.uow.images_repository.update(*images)
+            await self.uow.images_repository.update(*updated_images)
             await self.uow.commit()
 
         return post_feed.PostFeedResponse(feed=new_post)

@@ -1,12 +1,13 @@
 import abc
 import typing
 
-from service.interfaces.repositories import feeds, images
+from service.interfaces.repositories import feeds, followers, images
 
 
 class UoW(abc.ABC):
     feeds_repository: feeds.IFeedsRepository
     images_repository: images.IImageRepository
+    followers_repository: followers.IFollowersRepository
 
     @abc.abstractmethod
     async def __aenter__(self) -> typing.Self:

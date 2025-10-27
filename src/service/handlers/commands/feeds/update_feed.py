@@ -52,16 +52,15 @@ class UpdateFeedHandler(
             )
 
             images_for_unbinding = [
-                im for im in already_bound_images if im not in images
-            ]
-            images_for_binding = [im for im in images if im not in already_bound_images]
-
-            for im in images_for_unbinding:
                 im.unbound_from_feed()
-
-            for im in images_for_binding:
+                for im in already_bound_images
+                if im not in images
+            ]
+            images_for_binding = [
                 im.bound_to_feed(feed.feed_id)
-
+                for im in images
+                if im not in already_bound_images
+            ]
             new_feed = feed_entity.Feed(
                 feed_id=feed.feed_id,
                 account_id=feed.account_id,

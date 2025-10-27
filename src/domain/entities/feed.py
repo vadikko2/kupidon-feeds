@@ -5,7 +5,7 @@ import pydantic
 from domain.entities import images
 
 
-class Feed(pydantic.BaseModel):
+class Feed(pydantic.BaseModel, frozen=True):
     """
     Feed entity
     """
