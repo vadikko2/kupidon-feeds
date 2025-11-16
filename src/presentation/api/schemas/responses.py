@@ -66,3 +66,20 @@ class Follower(pydantic.BaseModel):
     follow_for: pydantic.StrictStr = pydantic.Field(description="Follow for")
 
     followed_at: pydantic.NaiveDatetime = pydantic.Field(description="Followed at")
+
+
+class AccountInfo(pydantic.BaseModel):
+    account_id: pydantic.StrictStr = pydantic.Field(description="Account id")
+
+    feeds_count: pydantic.NonNegativeInt = pydantic.Field(
+        description="Feeds count",
+        default=0,
+    )
+    followers_count: pydantic.NonNegativeInt = pydantic.Field(
+        description="Followers count",
+        default=0,
+    )
+    following_count: pydantic.NonNegativeInt = pydantic.Field(
+        description="Following count",
+        default=0,
+    )

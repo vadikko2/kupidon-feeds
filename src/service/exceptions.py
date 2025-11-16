@@ -41,3 +41,8 @@ class UserDoesNotOwnFeed(Exception):
         super().__init__(
             f"Feed with id {feed_id} does not belong to the user {account_id}",
         )
+
+
+class UserNotFound(Exception):
+    def __init__(self, account_id: str):
+        super().__init__(f"Account with id {account_id} not found")

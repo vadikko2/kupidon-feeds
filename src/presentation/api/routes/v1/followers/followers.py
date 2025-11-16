@@ -1,7 +1,10 @@
+import random
+
 import cqrs
 import fastapi
 import pydantic
 from fastapi_app import response
+from fastapi_app.exception_handlers import registry
 
 from presentation import dependencies
 from presentation.api import security
@@ -10,7 +13,9 @@ from presentation.api.schemas import (
     requests as requests_schema,
     responses as responses_schema,
 )
+from service import exceptions as service_exceptions
 from service.models.commands.followers import follow as follow_model
+from service.models.queries.feeds import get_feeds as get_feeds_model
 
 router = fastapi.APIRouter(prefix="/followers")
 
@@ -19,6 +24,11 @@ router = fastapi.APIRouter(prefix="/followers")
     "",
     status_code=fastapi.status.HTTP_201_CREATED,
     description="Follow for account",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.UserNotFound,
+    ),
 )
 async def follow(
     body: requests_schema.FollowAccount = fastapi.Body(...),
@@ -46,6 +56,10 @@ async def follow(
     "",
     status_code=fastapi.status.HTTP_200_OK,
     description="Get followers",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+    ),
 )
 async def get_followers(
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
@@ -67,6 +81,10 @@ async def get_followers(
     "/follows",
     status_code=fastapi.status.HTTP_200_OK,
     description="Get follows",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+    ),
 )
 async def get_follows(
     follower_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
@@ -88,8 +106,45 @@ async def get_follows(
     "/{followed_account_id}",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     description="Unfollow for account",
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+    ),
 )
 async def unfollow(
     follower_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
 ) -> None:
     pass
+
+
+@router.get(
+    "/{account_id}/info",
+    status_code=fastapi.status.HTTP_200_OK,
+    responses=registry.get_exception_responses(
+        service_exceptions.GetUserIdError,
+        service_exceptions.UnauthorizedError,
+        service_exceptions.UserNotFound,
+    ),
+)
+async def get_account_info(
+    account_id: pydantic.StrictStr = fastapi.Path(...),
+    _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
+) -> response.Response[responses_schema.AccountInfo]:
+    result: get_feeds_model.GetAccountFeedsResponse = await mediator.send(
+        get_feeds_model.GetAccountFeeds(
+            account_id=account_id,
+            limit=1,
+            offset=0,
+        ),
+    )
+    return response.Response(
+        result=responses_schema.AccountInfo(
+            account_id=account_id,
+            followers_count=random.randint(0, 100),
+            following_count=random.randint(0, 100),
+            feeds_count=result.total_count,
+        ),
+    )

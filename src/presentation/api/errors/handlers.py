@@ -69,6 +69,14 @@ def image_already_bound_to_feed_error_handler(
     return models.ErrorResponse(message=str(error))
 
 
+@bind_exception(status.HTTP_404_NOT_FOUND)
+def user_not_found_error_handler(
+    _: requests.Request,
+    error: service_exceptions.UserNotFound,
+) -> models.ErrorResponse:
+    return models.ErrorResponse(message=str(error))
+
+
 handlers = [
     unauthorized_error_handler,
     forbidden_error_handler,
@@ -78,4 +86,5 @@ handlers = [
     image_already_bound_to_feed_error_handler,
     feed_not_found_error_handler,
     user_does_not_own_feed_error_handler,
+    user_not_found_error_handler,
 ]
