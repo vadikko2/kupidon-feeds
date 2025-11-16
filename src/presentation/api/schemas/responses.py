@@ -26,6 +26,10 @@ class Feed(pydantic.BaseModel):
 
     text: pydantic.StrictStr = pydantic.Field(description="Feed text")
     images: list[OrderedImage] = pydantic.Field(description="Feed images", min_length=1)
+    has_liked: pydantic.StrictBool = pydantic.Field(
+        description="Has liked",
+        default=False,
+    )
 
     likes_count: pydantic.NonNegativeInt = pydantic.Field(
         description="Likes count",

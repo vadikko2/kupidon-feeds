@@ -13,6 +13,7 @@ class Feed(pydantic.BaseModel, frozen=True):
     feed_id: pydantic.UUID4
     account_id: str
     has_followed: bool
+    has_liked: bool = False
 
     created_at: pydantic.NaiveDatetime = pydantic.Field(
         default_factory=datetime.datetime.now,
