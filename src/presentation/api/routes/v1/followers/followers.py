@@ -1,5 +1,3 @@
-import random
-
 import cqrs
 import fastapi
 import pydantic
@@ -14,8 +12,15 @@ from presentation.api.schemas import (
     responses as responses_schema,
 )
 from service import exceptions as service_exceptions
-from service.models.commands.followers import follow as follow_model
-from service.models.queries.feeds import get_feeds as get_feeds_model
+from service.models.commands.followers import (
+    follow as follow_model,
+    unfollow as unfollow_model,
+)
+from service.models.queries.followers import (
+    get_account_info as get_account_info_model,
+    get_followers as get_followers_model,
+    get_following as get_following_model,
+)
 
 router = fastapi.APIRouter(prefix="/followers")
 
@@ -28,6 +33,7 @@ router = fastapi.APIRouter(prefix="/followers")
         service_exceptions.GetUserIdError,
         service_exceptions.UnauthorizedError,
         service_exceptions.UserNotFound,
+        service_exceptions.CannotFollowSelf,
     ),
 )
 async def follow(
@@ -65,14 +71,35 @@ async def get_followers(
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[pagination.Pagination[responses_schema.Follower]]:
-    return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination(
-            url="",
-            base_items=[],
+    """
+    # Get followers
+    """
+    result: get_followers_model.GetFollowersResponse = await mediator.send(
+        get_followers_model.GetFollowers(
+            account_id=account_id,
             limit=limit,
             offset=offset,
-            count=0,
+        ),
+    )
+
+    return response.Response[pagination.Pagination[responses_schema.Follower]](
+        result=pagination.Pagination[responses_schema.Follower](
+            url="",
+            base_items=[
+                responses_schema.Follower(
+                    follower=follower.follower,
+                    follow_for=follower.follow_for,
+                    followed_at=follower.followed_at,
+                )
+                for follower in result.followers
+            ],
+            limit=limit,
+            offset=offset,
+            count=result.total_count,
         ),
     )
 
@@ -87,17 +114,38 @@ async def get_followers(
     ),
 )
 async def get_follows(
-    follower_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[pagination.Pagination[responses_schema.Follower]]:
-    return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination(
-            url="",
-            base_items=[],
+    """
+    # Get follows (following)
+    """
+    result: get_following_model.GetFollowingResponse = await mediator.send(
+        get_following_model.GetFollowing(
+            account_id=account_id,
             limit=limit,
             offset=offset,
-            count=0,
+        ),
+    )
+
+    return response.Response[pagination.Pagination[responses_schema.Follower]](
+        result=pagination.Pagination[responses_schema.Follower](
+            url="",
+            base_items=[
+                responses_schema.Follower(
+                    follower=follower.follower,
+                    follow_for=follower.follow_for,
+                    followed_at=follower.followed_at,
+                )
+                for follower in result.following
+            ],
+            limit=limit,
+            offset=offset,
+            count=result.total_count,
         ),
     )
 
@@ -112,9 +160,18 @@ async def get_follows(
     ),
 )
 async def unfollow(
+    followed_account_id: pydantic.StrictStr = fastapi.Path(...),
     follower_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> None:
-    pass
+    await mediator.send(
+        unfollow_model.Unfollow(
+            follower=follower_id,
+            follow_for=followed_account_id,
+        ),
+    )
 
 
 @router.get(
@@ -133,18 +190,16 @@ async def get_account_info(
         dependencies.request_mediator_factory,
     ),
 ) -> response.Response[responses_schema.AccountInfo]:
-    result: get_feeds_model.GetAccountFeedsResponse = await mediator.send(
-        get_feeds_model.GetAccountFeeds(
+    result: get_account_info_model.GetAccountInfoResponse = await mediator.send(
+        get_account_info_model.GetAccountInfo(
             account_id=account_id,
-            limit=1,
-            offset=0,
         ),
     )
     return response.Response(
         result=responses_schema.AccountInfo(
-            account_id=account_id,
-            followers_count=random.randint(0, 100),
-            following_count=random.randint(0, 100),
-            feeds_count=result.total_count,
+            account_id=result.account_id,
+            followers_count=result.followers_count,
+            following_count=result.following_count,
+            feeds_count=result.feeds_count,
         ),
     )

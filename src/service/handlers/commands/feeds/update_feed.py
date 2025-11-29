@@ -18,9 +18,9 @@ class UpdateFeedHandler(
 ):
     def __init__(
         self,
-        uow: unit_of_work.UoW,
+        uow_factory: unit_of_work.UoWFactory,
     ):
-        self.uow = uow
+        self.uow = uow_factory()
         self._events = []
 
     @property

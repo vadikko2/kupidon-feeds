@@ -18,10 +18,10 @@ class UploadImageHandler(
     def __init__(
         self,
         image_storage: images_storage_interface.ImagesStorage,
-        uow: unit_of_work.UoW,
+        uow_factory: unit_of_work.UoWFactory,
     ):
         self.image_storage = image_storage
-        self.uow = uow
+        self.uow = uow_factory()
         self._events = []
 
     @property

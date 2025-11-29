@@ -46,3 +46,15 @@ class UserDoesNotOwnFeed(Exception):
 class UserNotFound(Exception):
     def __init__(self, account_id: str):
         super().__init__(f"Account with id {account_id} not found")
+
+
+class AlreadyFollowing(Exception):
+    def __init__(self, follower: str, follow_for: str):
+        super().__init__(
+            f"User {follower} is already following {follow_for}",
+        )
+
+
+class CannotFollowSelf(Exception):
+    def __init__(self, account_id: str):
+        super().__init__(f"User {account_id} cannot follow themselves")

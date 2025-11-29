@@ -15,9 +15,9 @@ class PostFeedHandler(
 ):
     def __init__(
         self,
-        uow: unit_of_work.UoW,
+        uow_factory: unit_of_work.UoWFactory,
     ):
-        self.uow = uow
+        self.uow = uow_factory()
         self._events = []
 
     @property
@@ -46,11 +46,11 @@ class PostFeedHandler(
                 updated_images.append(image.bound_to_feed(new_feed_id))
 
             new_post = feed_entities.Feed(
-                feed_id=uuid.uuid4(),
+                feed_id=new_feed_id,
                 account_id=request.account_id,
                 has_followed=False,
                 text=request.text,
-                images=images,
+                images=updated_images,
             )
             await self.uow.feeds_repository.add(new_post)
             await self.uow.images_repository.update(*updated_images)

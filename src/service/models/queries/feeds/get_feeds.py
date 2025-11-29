@@ -1,3 +1,5 @@
+import uuid
+
 import cqrs
 
 from domain.entities import feed
@@ -17,3 +19,11 @@ class GetAccountFeedsResponse(cqrs.Response):
     offset: int
 
     total_count: int
+
+
+class GetFeeds(cqrs.Request):
+    feed_ids: list[uuid.UUID]
+
+
+class GetFeedsResponse(cqrs.Response):
+    feeds: list[feed.Feed]

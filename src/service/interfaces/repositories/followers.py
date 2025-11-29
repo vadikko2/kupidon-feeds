@@ -23,14 +23,35 @@ class IFollowersRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_followers(self, account_id: str) -> list[follower_entity.Follower]:
+    async def get_follow(
+        self,
+        follower: str,
+        follow_for: str,
+    ) -> follower_entity.Follower | None:
+        """
+        Returns follower entity if exists, None otherwise
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_followers(
+        self,
+        account_id: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[follower_entity.Follower]:
         """
         Returns followers
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_following(self, account_id: str) -> list[follower_entity.Follower]:
+    async def get_following(
+        self,
+        account_id: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[follower_entity.Follower]:
         """
         Returns following
         """

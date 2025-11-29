@@ -22,6 +22,9 @@ log_config = fastapi_logging.generate_log_config(
 )
 
 config.dictConfig(log_config)
+logging.getLogger("uvicorn").setLevel(logging.ERROR)
+logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
+logging.getLogger("uvicorn.asgi").setLevel(logging.ERROR)
 logging.getLogger("asyncio").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 logging.getLogger("multipart").setLevel(logging.ERROR)
@@ -31,6 +34,7 @@ logging.getLogger("faker").setLevel(logging.ERROR)
 logging.getLogger("httpcore").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("httpx_retries").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
 
 app = fastapi_app.create(
     debug=app_settings.DEBUG,

@@ -1,7 +1,3 @@
-import datetime
-import random
-import uuid
-
 import cqrs
 import fastapi
 import pydantic
@@ -90,36 +86,43 @@ async def get_feeds(
         max_length=100,
     ),
     _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    mediator: cqrs.RequestMediator = fastapi.Depends(
+        dependencies.request_mediator_factory,
+    ),
 ) -> response.Response[responses_schema.Feeds]:
     """
     # Get feeds by ids
     """
+    result: get_feeds_model.GetFeedsResponse = await mediator.send(
+        get_feeds_model.GetFeeds(feed_ids=feed_id),
+    )
+
     return response.Response[responses_schema.Feeds](
         result=responses_schema.Feeds(
             items=[
                 responses_schema.Feed(
-                    uuid=_id,
-                    account_id=f"fake-account-{random.randint(1, 10_000)}",
-                    has_followed=bool(random.randint(0, 1)),
-                    created_at=datetime.datetime.now()
-                    - datetime.timedelta(days=random.randint(1, 3_000)),
-                    updated_at=None,
-                    text="",
+                    uuid=feed.feed_id,
+                    account_id=feed.account_id,
+                    has_followed=feed.has_followed,
+                    has_liked=feed.has_liked,
+                    created_at=feed.created_at,
+                    updated_at=feed.updated_at,
+                    text=feed.text,
                     images=[
                         responses_schema.OrderedImage(
                             image=responses_schema.Image(
-                                uuid=uuid.uuid4(),
-                                url="https://s3.twcstorage.ru/baa7cf79-ml-env-s3/profiles/mock_female.jpg",
-                                blurhash="LRNJ^29G%g%NE1Mx_NRiE1ogofV@",
+                                uuid=image.image_id,
+                                url=image.url,
+                                blurhash=image.blurhash,
                             ),
-                            order=0,
+                            order=image.order,
                         )
-                        for _ in range(random.randint(1, 10))
+                        for image in feed.images
                     ],
-                    likes_count=random.randint(0, 1_000_000),
-                    views_count=random.randint(0, 1_000_000),
+                    likes_count=feed.likes_count,
+                    views_count=feed.views_count,
                 )
-                for _id in feed_id
+                for feed in result.feeds
             ],
         ),
     )

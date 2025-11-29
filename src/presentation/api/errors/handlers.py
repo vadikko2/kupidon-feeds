@@ -77,6 +77,22 @@ def user_not_found_error_handler(
     return models.ErrorResponse(message=str(error))
 
 
+@bind_exception(status.HTTP_409_CONFLICT)
+def already_following_error_handler(
+    _: requests.Request,
+    error: service_exceptions.AlreadyFollowing,
+) -> models.ErrorResponse:
+    return models.ErrorResponse(message=str(error))
+
+
+@bind_exception(status.HTTP_400_BAD_REQUEST)
+def cannot_follow_self_error_handler(
+    _: requests.Request,
+    error: service_exceptions.CannotFollowSelf,
+) -> models.ErrorResponse:
+    return models.ErrorResponse(message=str(error))
+
+
 handlers = [
     unauthorized_error_handler,
     forbidden_error_handler,
@@ -87,4 +103,6 @@ handlers = [
     feed_not_found_error_handler,
     user_does_not_own_feed_error_handler,
     user_not_found_error_handler,
+    already_following_error_handler,
+    cannot_follow_self_error_handler,
 ]
