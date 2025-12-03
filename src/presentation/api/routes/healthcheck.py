@@ -7,6 +7,7 @@ import redis.asyncio as rc
 from fastapi import responses
 
 from infrastructure.cache import redis
+from presentation.api import limiter, settings
 from presentation.api.schemas import healthcheck as healthcheck_response
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,9 @@ router = fastapi.APIRouter()
         },
     },
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def healthcheck(
+    request: fastapi.Request,
     redis_client: rc.Redis = fastapi.Depends(
         redis.RedisClientFactory(),
     ),

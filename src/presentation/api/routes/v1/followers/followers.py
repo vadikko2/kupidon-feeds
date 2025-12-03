@@ -5,7 +5,7 @@ from fastapi_app import response
 from fastapi_app.exception_handlers import registry
 
 from presentation import dependencies
-from presentation.api import security
+from presentation.api import limiter, security, settings
 from presentation.api.schemas import (
     pagination,
     requests as requests_schema,
@@ -36,7 +36,9 @@ router = fastapi.APIRouter(prefix="/followers")
         service_exceptions.CannotFollowSelf,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def follow(
+    request: fastapi.Request,
     body: requests_schema.FollowAccount = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(
@@ -67,7 +69,9 @@ async def follow(
         service_exceptions.UnauthorizedError,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def get_followers(
+    request: fastapi.Request,
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
@@ -113,7 +117,9 @@ async def get_followers(
         service_exceptions.UnauthorizedError,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def get_follows(
+    request: fastapi.Request,
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
@@ -159,7 +165,9 @@ async def get_follows(
         service_exceptions.UnauthorizedError,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def unfollow(
+    request: fastapi.Request,
     followed_account_id: pydantic.StrictStr = fastapi.Path(...),
     follower_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(
@@ -183,7 +191,9 @@ async def unfollow(
         service_exceptions.UserNotFound,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def get_account_info(
+    request: fastapi.Request,
     account_id: pydantic.StrictStr = fastapi.Path(...),
     _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(

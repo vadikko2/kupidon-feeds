@@ -3,12 +3,12 @@ orjson==3.9.15
 pydantic==2.8.2
 pydantic-settings==2.2.1
 python-cqrs==3.0.1
-python-dotenv==1.0.0
 
 # API
 fastapi_app@git+https://github.com/vadikko2/fastapi-app@0.0.2
 redis==5.0.3
 fastapi==0.109.2
+slowapi==0.1.9
 
 # Database
 sqlalchemy==2.0.25

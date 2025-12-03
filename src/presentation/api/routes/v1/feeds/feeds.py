@@ -5,7 +5,7 @@ from fastapi_app import response
 from fastapi_app.exception_handlers import registry
 
 from presentation import dependencies
-from presentation.api import security
+from presentation.api import limiter, security, settings
 from presentation.api.schemas import (
     pagination,
     requests as requests_schema,
@@ -33,7 +33,9 @@ router = fastapi.APIRouter(prefix="/feeds")
         service_exceptions.ImageNotFound,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def post_feed(
+    request: fastapi.Request,
     body: requests_schema.PostFeed = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(
@@ -80,7 +82,9 @@ async def post_feed(
     status_code=fastapi.status.HTTP_200_OK,
     description="Get feeds",
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def get_feeds(
+    request: fastapi.Request,
     feed_id: list[pydantic.UUID4] = fastapi.Query(
         min_length=1,
         max_length=100,
@@ -137,7 +141,9 @@ async def get_feeds(
         service_exceptions.UnauthorizedError,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def get_account_feeds(
+    request: fastapi.Request,
     account_id: pydantic.StrictStr = fastapi.Path(...),
     _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
@@ -202,7 +208,9 @@ async def get_account_feeds(
         service_exceptions.UserDoesNotOwnFeed,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def patch_feed(
+    request: fastapi.Request,
     feed_id: pydantic.UUID4 = fastapi.Path(...),
     body: requests_schema.UpdateFeed = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
@@ -257,7 +265,9 @@ async def patch_feed(
         service_exceptions.UserDoesNotOwnFeed,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def delete_feed(
+    request: fastapi.Request,
     feed_id: pydantic.UUID4 = fastapi.Path(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(

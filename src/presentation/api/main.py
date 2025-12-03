@@ -6,7 +6,7 @@ import fastapi_app
 from fastapi_app import logging as fastapi_logging
 
 import settings
-from presentation.api import errors, routes
+from presentation.api import errors, limiter, routes
 from presentation.api.routes import healthcheck
 
 dotenv.load_dotenv()
@@ -50,3 +50,5 @@ app = fastapi_app.create(
     cors_enable=True,
     log_config=log_config,
 )
+# Rate Limitation
+app.state.limiter = limiter.limiter

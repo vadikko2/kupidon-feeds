@@ -5,7 +5,7 @@ from fastapi_app import response
 from fastapi_app.exception_handlers import registry
 
 from presentation import dependencies
-from presentation.api import security
+from presentation.api import limiter, security, settings
 from presentation.api.schemas import responses as responses_schema
 from service import exceptions as service_exceptions
 from service.models.commands.images import upload_image as upload_image_model
@@ -22,7 +22,9 @@ router = fastapi.APIRouter(prefix="/feeds/images")
         service_exceptions.ImageAlreadyExists,
     ),
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def upload_image(
+    request: fastapi.Request,
     image: fastapi.UploadFile = fastapi.File(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(

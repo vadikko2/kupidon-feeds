@@ -3,7 +3,7 @@ import fastapi
 import pydantic
 
 from presentation import dependencies
-from presentation.api import security
+from presentation.api import limiter, security, settings
 from presentation.api.schemas import requests as requests_schema
 from service.models.commands.views import view_feeds as view_feeds_model
 
@@ -31,7 +31,9 @@ async def _process_views(
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
     description="View feeds (idempotent, background processing)",
 )
+@limiter.limiter.limit(settings.api_settings.max_requests_per_ip_limit)
 async def view_feeds(
+    request: fastapi.Request,
     body: requests_schema.ViewFeeds = fastapi.Body(...),
     account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     background_tasks: fastapi.BackgroundTasks = fastapi.BackgroundTasks(),
