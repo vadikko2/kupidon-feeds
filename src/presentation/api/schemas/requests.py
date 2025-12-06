@@ -7,7 +7,7 @@ class PostFeed(pydantic.BaseModel):
         max_length=4096,
         default="",
     )
-    images: list[pydantic.UUID4] = pydantic.Field(min_length=1)
+    images: list[pydantic.UUID4] = pydantic.Field(min_length=1, max_length=10)
 
 
 class UpdateFeed(PostFeed):
