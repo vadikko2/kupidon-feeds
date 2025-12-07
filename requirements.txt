@@ -5,7 +5,7 @@ pydantic-settings==2.2.1
 python-cqrs==3.0.1
 
 # API
-fastapi_app@git+https://github.com/vadikko2/fastapi-app@0.0.2
+fastapi_app@git+https://github.com/vadikko2/fastapi-app@0.0.8
 redis==5.0.3
 fastapi==0.109.2
 slowapi==0.1.9
