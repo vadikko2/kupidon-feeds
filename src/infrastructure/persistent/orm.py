@@ -27,16 +27,6 @@ class FeedORM(Base):
         nullable=False,
         index=True,
     )
-    has_followed = sqlalchemy.Column(
-        sqlalchemy.Boolean,
-        nullable=False,
-        default=False,
-    )
-    has_liked = sqlalchemy.Column(
-        sqlalchemy.Boolean,
-        nullable=False,
-        default=False,
-    )
     created_at = sqlalchemy.Column(
         sqlalchemy.DateTime(timezone=False),
         nullable=False,
@@ -51,16 +41,6 @@ class FeedORM(Base):
     text = sqlalchemy.Column(
         sqlalchemy.Text,
         nullable=False,
-    )
-    likes_count = sqlalchemy.Column(
-        sqlalchemy.Integer,
-        nullable=False,
-        default=0,
-    )
-    views_count = sqlalchemy.Column(
-        sqlalchemy.Integer,
-        nullable=False,
-        default=0,
     )
 
     # Relationships

@@ -27,6 +27,7 @@ class GetAccountFeedsHandler(
                 request.account_id,
                 limit=request.limit,
                 offset=request.offset,
+                current_account_id=request.current_account_id,
             )
             account_feeds_count = await self.uow.feeds_repository.count_feeds(
                 request.account_id,
@@ -55,5 +56,8 @@ class GetFeedsHandler(
         request: get_feeds.GetFeeds,
     ) -> get_feeds.GetFeedsResponse:
         async with self.uow:
-            feeds = await self.uow.feeds_repository.get_by_ids(request.feed_ids)
+            feeds = await self.uow.feeds_repository.get_by_ids(
+                request.feed_ids,
+                current_account_id=request.current_account_id,
+            )
             return get_feeds.GetFeedsResponse(feeds=feeds)

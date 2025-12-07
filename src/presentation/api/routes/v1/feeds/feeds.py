@@ -89,7 +89,7 @@ async def get_feeds(
         min_length=1,
         max_length=100,
     ),
-    _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    account_id: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
     mediator: cqrs.RequestMediator = fastapi.Depends(
         dependencies.request_mediator_factory,
     ),
@@ -98,7 +98,7 @@ async def get_feeds(
     # Get feeds by ids
     """
     result: get_feeds_model.GetFeedsResponse = await mediator.send(
-        get_feeds_model.GetFeeds(feed_ids=feed_id),
+        get_feeds_model.GetFeeds(feed_ids=feed_id, current_account_id=account_id),
     )
 
     return response.Response[responses_schema.Feeds](
@@ -145,7 +145,9 @@ async def get_feeds(
 async def get_account_feeds(
     request: fastapi.Request,
     account_id: pydantic.StrictStr = fastapi.Path(...),
-    _: pydantic.StrictStr = fastapi.Depends(security.extract_account_id),
+    current_account_id: pydantic.StrictStr = fastapi.Depends(
+        security.extract_account_id,
+    ),
     limit: pydantic.PositiveInt = fastapi.Query(default=10, ge=1, le=100),
     offset: pydantic.NonNegativeInt = fastapi.Query(default=0),
     mediator: cqrs.RequestMediator = fastapi.Depends(
@@ -158,6 +160,7 @@ async def get_account_feeds(
     result: get_feeds_model.GetAccountFeedsResponse = await mediator.send(
         get_feeds_model.GetAccountFeeds(
             account_id=account_id,
+            current_account_id=current_account_id,
             limit=limit,
             offset=offset,
         ),

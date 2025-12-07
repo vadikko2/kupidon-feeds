@@ -21,14 +21,22 @@ class IFeedsRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_by_id(self, feed_id: uuid.UUID) -> feed_entity.Feed | None:
+    async def get_by_id(
+        self,
+        feed_id: uuid.UUID,
+        current_account_id: str | None = None,
+    ) -> feed_entity.Feed | None:
         """
         Returns feed by id
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_by_ids(self, feed_ids: list[uuid.UUID]) -> list[feed_entity.Feed]:
+    async def get_by_ids(
+        self,
+        feed_ids: list[uuid.UUID],
+        current_account_id: str | None = None,
+    ) -> list[feed_entity.Feed]:
         """
         Returns feeds by ids
         """
@@ -40,6 +48,7 @@ class IFeedsRepository(abc.ABC):
         account_id: str,
         limit: int = 100,
         offset: int = 0,
+        current_account_id: str | None = None,
     ) -> list[feed_entity.Feed]:
         """
         Returns account feeds

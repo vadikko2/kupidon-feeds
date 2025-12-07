@@ -5,7 +5,13 @@ from sqlalchemy import orm, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.entities import feed as feed_entity, images as images_entity
-from infrastructure.persistent.orm import FeedORM, ImageORM, LikeORM, ViewORM
+from infrastructure.persistent.orm import (
+    FeedORM,
+    ImageORM,
+    LikeORM,
+    ViewORM,
+    FollowerORM,
+)
 from service import exceptions
 from service.interfaces.repositories import feeds as feeds_interface
 
@@ -21,8 +27,11 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
     def _orm_to_entity(
         self,
         feed_orm: FeedORM,
+        current_account_id: str | None = None,
         likes_count: int | None = None,
         views_count: int | None = None,
+        has_followed: bool | None = None,
+        has_liked: bool | None = None,
     ) -> feed_entity.Feed:
         """
         Converts ORM model to domain entity
@@ -40,25 +49,32 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
             for img in feed_orm.images
         ]
 
-        # Используем переданный likes_count или вычисляем из relationship
+        # Используем переданные значения или вычисляем из relationship
         if likes_count is None:
             likes_count = len(feed_orm.likes) if hasattr(feed_orm, "likes") else 0
 
-        # Используем переданный views_count или значение из колонки (для обратной совместимости)
         if views_count is None:
-            views_count = feed_orm.views_count  # type: ignore[assignment]
+            views_count = len(feed_orm.views) if hasattr(feed_orm, "views") else 0
+
+        # Используем переданные значения has_followed и has_liked
+        # Если они не переданы, устанавливаем значения по умолчанию
+        if has_followed is None:
+            has_followed = False
+
+        if has_liked is None:
+            has_liked = False
 
         return feed_entity.Feed(
             feed_id=feed_orm.feed_id,  # type: ignore[arg-type]
             account_id=feed_orm.account_id,  # type: ignore[arg-type]
-            has_followed=feed_orm.has_followed,  # type: ignore[arg-type]
-            has_liked=feed_orm.has_liked,  # type: ignore[arg-type]
+            has_followed=has_followed,
+            has_liked=has_liked,
             created_at=feed_orm.created_at,  # type: ignore[arg-type]
             updated_at=feed_orm.updated_at,  # type: ignore[arg-type]
             text=feed_orm.text,  # type: ignore[arg-type]
             images=images,
-            likes_count=likes_count,
-            views_count=views_count or 0,  # type: ignore[arg-type]
+            likes_count=likes_count or 0,
+            views_count=views_count or 0,
         )
 
     def _entity_to_orm(self, feed: feed_entity.Feed) -> FeedORM:
@@ -68,13 +84,9 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         feed_orm = FeedORM(
             feed_id=feed.feed_id,
             account_id=feed.account_id,
-            has_followed=feed.has_followed,
-            has_liked=feed.has_liked,
             created_at=feed.created_at,
             updated_at=feed.updated_at,
             text=feed.text,
-            likes_count=feed.likes_count,
-            views_count=feed.views_count,
         )
 
         # Add images
@@ -104,13 +116,9 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         feed_orm = FeedORM(
             feed_id=feed.feed_id,
             account_id=feed.account_id,
-            has_followed=feed.has_followed,
-            has_liked=feed.has_liked,
             created_at=feed.created_at,
             updated_at=feed.updated_at,
             text=feed.text,
-            likes_count=feed.likes_count,
-            views_count=feed.views_count,
         )
 
         # Don't link images here - they will be updated separately via images_repository.update()
@@ -136,13 +144,9 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
 
         # Update feed fields
         feed_orm.account_id = feed.account_id  # type: ignore[assignment]
-        feed_orm.has_followed = feed.has_followed  # type: ignore[assignment]
-        feed_orm.has_liked = feed.has_liked  # type: ignore[assignment]
         feed_orm.created_at = feed.created_at  # type: ignore[assignment]
         feed_orm.updated_at = feed.updated_at  # type: ignore[assignment]
         feed_orm.text = feed.text  # type: ignore[assignment]
-        feed_orm.likes_count = feed.likes_count  # type: ignore[assignment]
-        feed_orm.views_count = feed.views_count  # type: ignore[assignment]
 
         # Update images - remove old ones and add new ones
         # Get existing image IDs
@@ -197,7 +201,11 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
 
                 feed_orm.images.append(image_orm)
 
-    async def get_by_id(self, feed_id: uuid.UUID) -> feed_entity.Feed | None:
+    async def get_by_id(
+        self,
+        feed_id: uuid.UUID,
+        current_account_id: str | None = None,
+    ) -> feed_entity.Feed | None:
         """
         Returns feed by id
         """
@@ -215,11 +223,43 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
             .scalar_subquery()
         )
 
+        # Подзапрос для проверки has_followed (подписан ли current_account_id на автора поста)
+        if current_account_id:
+            has_followed_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    FollowerORM.follower == current_account_id,
+                    FollowerORM.follow_for == FeedORM.account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_followed_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
+        # Подзапрос для проверки has_liked (лайкнул ли current_account_id этот пост)
+        if current_account_id:
+            has_liked_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    LikeORM.feed_id == FeedORM.feed_id,
+                    LikeORM.account_id == current_account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_liked_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
         stmt = (
             select(
                 FeedORM,
                 likes_count_subquery.label("calculated_likes_count"),
                 views_count_subquery.label("calculated_views_count"),
+                has_followed_subquery.label("calculated_has_followed"),
+                has_liked_subquery.label("calculated_has_liked"),
             )
             .options(orm.joinedload(FeedORM.images))
             .filter(FeedORM.feed_id == feed_id)
@@ -230,12 +270,25 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         if row is None:
             return None
 
-        feed_orm, likes_count, views_count = row
+        feed_orm, likes_count, views_count, has_followed, has_liked = row
         likes_count_value = int(likes_count) if likes_count is not None else 0
         views_count_value = int(views_count) if views_count is not None else 0
-        return self._orm_to_entity(feed_orm, likes_count_value, views_count_value)
+        has_followed_value = bool(has_followed) if has_followed is not None else False
+        has_liked_value = bool(has_liked) if has_liked is not None else False
+        return self._orm_to_entity(
+            feed_orm,
+            current_account_id=current_account_id,
+            likes_count=likes_count_value,
+            views_count=views_count_value,
+            has_followed=has_followed_value,
+            has_liked=has_liked_value,
+        )
 
-    async def get_by_ids(self, feed_ids: list[uuid.UUID]) -> list[feed_entity.Feed]:
+    async def get_by_ids(
+        self,
+        feed_ids: list[uuid.UUID],
+        current_account_id: str | None = None,
+    ) -> list[feed_entity.Feed]:
         """
         Returns feeds by ids
         """
@@ -256,11 +309,43 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
             .scalar_subquery()
         )
 
+        # Подзапрос для проверки has_followed (подписан ли current_account_id на автора поста)
+        if current_account_id:
+            has_followed_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    FollowerORM.follower == current_account_id,
+                    FollowerORM.follow_for == FeedORM.account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_followed_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
+        # Подзапрос для проверки has_liked (лайкнул ли current_account_id этот пост)
+        if current_account_id:
+            has_liked_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    LikeORM.feed_id == FeedORM.feed_id,
+                    LikeORM.account_id == current_account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_liked_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
         stmt = (
             select(
                 FeedORM,
                 likes_count_subquery.label("calculated_likes_count"),
                 views_count_subquery.label("calculated_views_count"),
+                has_followed_subquery.label("calculated_has_followed"),
+                has_liked_subquery.label("calculated_has_liked"),
             )
             .options(orm.joinedload(FeedORM.images))
             .filter(FeedORM.feed_id.in_(feed_ids))
@@ -271,10 +356,13 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         return [
             self._orm_to_entity(
                 feed_orm,
-                int(likes_count) if likes_count is not None else 0,
-                int(views_count) if views_count is not None else 0,
+                current_account_id=current_account_id,
+                likes_count=int(likes_count) if likes_count is not None else 0,
+                views_count=int(views_count) if views_count is not None else 0,
+                has_followed=bool(has_followed) if has_followed is not None else False,
+                has_liked=bool(has_liked) if has_liked is not None else False,
             )
-            for feed_orm, likes_count, views_count in rows
+            for feed_orm, likes_count, views_count, has_followed, has_liked in rows
         ]
 
     async def get_account_feeds(
@@ -282,6 +370,7 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         account_id: str,
         limit: int = 100,
         offset: int = 0,
+        current_account_id: str | None = None,
     ) -> list[feed_entity.Feed]:
         """
         Returns account feeds
@@ -300,11 +389,43 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
             .scalar_subquery()
         )
 
+        # Подзапрос для проверки has_followed (подписан ли current_account_id на автора поста)
+        if current_account_id:
+            has_followed_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    FollowerORM.follower == current_account_id,
+                    FollowerORM.follow_for == FeedORM.account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_followed_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
+        # Подзапрос для проверки has_liked (лайкнул ли current_account_id этот пост)
+        if current_account_id:
+            has_liked_subquery = select(
+                sqlalchemy.exists()
+                .where(
+                    LikeORM.feed_id == FeedORM.feed_id,
+                    LikeORM.account_id == current_account_id,
+                )
+                .correlate(FeedORM),
+            ).scalar_subquery()
+        else:
+            has_liked_subquery = select(
+                sqlalchemy.literal(False).cast(sqlalchemy.Boolean),
+            ).scalar_subquery()
+
         stmt = (
             select(
                 FeedORM,
                 likes_count_subquery.label("calculated_likes_count"),
                 views_count_subquery.label("calculated_views_count"),
+                has_followed_subquery.label("calculated_has_followed"),
+                has_liked_subquery.label("calculated_has_liked"),
             )
             .options(orm.joinedload(FeedORM.images))
             .filter(FeedORM.account_id == account_id)
@@ -318,10 +439,13 @@ class SQLAlchemyFeedsRepository(feeds_interface.IFeedsRepository):
         return [
             self._orm_to_entity(
                 feed_orm,
-                int(likes_count) if likes_count is not None else 0,
-                int(views_count) if views_count is not None else 0,
+                current_account_id=current_account_id,
+                likes_count=int(likes_count) if likes_count is not None else 0,
+                views_count=int(views_count) if views_count is not None else 0,
+                has_followed=bool(has_followed) if has_followed is not None else False,
+                has_liked=bool(has_liked) if has_liked is not None else False,
             )
-            for feed_orm, likes_count, views_count in rows
+            for feed_orm, likes_count, views_count, has_followed, has_liked in rows
         ]
 
     async def count_feeds(self, account_id: str) -> int:
