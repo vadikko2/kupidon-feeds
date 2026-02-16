@@ -30,7 +30,7 @@ container.bind(
 
 container.bind(
     di.bind_by_type(
-        dependent.Dependent(iam_service.HttpIAMService, scope="request"),
+        dependent.Dependent(iam_service.LocalJWTIAMService, scope="request"),
         iam_service_interface.IAMService,
     ),
 )
