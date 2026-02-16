@@ -21,10 +21,7 @@ class UnfollowHandler(
     def events(self) -> typing.List[event.Event]:
         return self._events
 
-    async def handle(
-        self,
-        request: unfollow_model.Unfollow,
-    ) -> None:
+    async def handle(self, request: unfollow_model.Unfollow) -> None:
         async with self.uow:
             # Проверяем, существует ли подписка
             has_follow = await self.uow.followers_repository.has_follow(

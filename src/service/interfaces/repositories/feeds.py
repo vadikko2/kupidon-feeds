@@ -21,6 +21,13 @@ class IFeedsRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def exists(self, feed_id: uuid.UUID) -> bool:
+        """
+        Returns True if a feed with the given id exists (lightweight check).
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def get_by_id(
         self,
         feed_id: uuid.UUID,
@@ -49,9 +56,9 @@ class IFeedsRepository(abc.ABC):
         limit: int = 100,
         offset: int = 0,
         current_account_id: str | None = None,
-    ) -> list[feed_entity.Feed]:
+    ) -> tuple[list[feed_entity.Feed], int]:
         """
-        Returns account feeds
+        Returns (account feeds, total count) in one query. Hot path.
         """
         raise NotImplementedError
 
@@ -64,4 +71,14 @@ class IFeedsRepository(abc.ABC):
 
     @abc.abstractmethod
     async def delete(self, feed_id: uuid.UUID) -> None:
+        """
+        Deletes feed by id. Idempotent: does not raise if the feed does not exist.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_account_info_counts(self, account_id: str) -> tuple[int, int, int]:
+        """
+        Returns (followers_count, following_count, feeds_count) in one query.
+        """
         raise NotImplementedError

@@ -2,4 +2,3 @@
 ruff==0.6.2
 pre-commit
 pyright
-alembic==1.13.1

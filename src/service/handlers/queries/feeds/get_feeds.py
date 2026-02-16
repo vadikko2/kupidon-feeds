@@ -22,22 +22,21 @@ class GetAccountFeedsHandler(
         request: get_feeds.GetAccountFeeds,
     ) -> get_feeds.GetAccountFeedsResponse:
         async with self.uow:
-            # Получаем feeds с пагинацией на уровне БД
-            account_feeds = await self.uow.feeds_repository.get_account_feeds(
+            (
+                account_feeds,
+                total_count,
+            ) = await self.uow.feeds_repository.get_account_feeds(
                 request.account_id,
                 limit=request.limit,
                 offset=request.offset,
                 current_account_id=request.current_account_id,
-            )
-            account_feeds_count = await self.uow.feeds_repository.count_feeds(
-                request.account_id,
             )
             return get_feeds.GetAccountFeedsResponse(
                 account_id=request.account_id,
                 feeds=account_feeds,
                 limit=request.limit,
                 offset=request.offset,
-                total_count=account_feeds_count,
+                total_count=total_count,
             )
 
 

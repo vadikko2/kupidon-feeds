@@ -11,9 +11,7 @@ fastapi==0.109.2
 slowapi==0.1.9
 
 # Database
-sqlalchemy==2.0.25
 asyncpg==0.29.0
-psycopg2-binary==2.9.9
 
 # Images
 blurhash==1.1.5

@@ -1,11 +1,14 @@
 import logging
+from contextlib import asynccontextmanager
 from logging import config
 
 import dotenv
+import fastapi
 import fastapi_app
 from fastapi_app import logging as fastapi_logging
 
 import settings
+from infrastructure.persistent.postgres import connection as postgres_connection
 from presentation.api import errors, limiter, routes
 from presentation.api.routes import healthcheck
 
@@ -34,7 +37,16 @@ logging.getLogger("faker").setLevel(logging.ERROR)
 logging.getLogger("httpcore").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("httpx_retries").setLevel(logging.ERROR)
-logging.getLogger("sqlalchemy").setLevel(logging.ERROR)
+
+
+@asynccontextmanager
+async def lifespan(app: fastapi.FastAPI):
+    await postgres_connection.init_pool()
+    try:
+        yield
+    finally:
+        await postgres_connection.close_pool()
+
 
 app = fastapi_app.create(
     debug=app_settings.DEBUG,
@@ -49,6 +61,7 @@ app = fastapi_app.create(
     exception_handlers=errors.handlers,
     cors_enable=True,
     log_config=log_config,
+    lifespan_handler=lifespan,
 )
 # Rate Limitation
 app.state.limiter = limiter.limiter

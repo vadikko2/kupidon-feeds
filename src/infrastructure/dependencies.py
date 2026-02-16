@@ -1,11 +1,13 @@
 import typing
 
+import asyncpg
 import di
 import redis.asyncio as redis
 from di import dependent
 
 from infrastructure.cache import redis as redis_cache
 from infrastructure.persistent import factory as uow_factory
+from infrastructure.persistent.postgres import connection as postgres_connection
 from infrastructure.services import iam_service
 from infrastructure.storages import s3
 from service.interfaces import unit_of_work as unit_of_work_interface
@@ -23,7 +25,14 @@ container.bind(
 
 container.bind(
     di.bind_by_type(
-        dependent.Dependent(uow_factory.SQLAlchemyUoWFactory, scope="request"),
+        dependent.Dependent(postgres_connection.get_pool, scope="request"),
+        asyncpg.Pool,
+    ),
+)
+
+container.bind(
+    di.bind_by_type(
+        dependent.Dependent(uow_factory.PostgresUoWFactory, scope="request"),
         unit_of_work_interface.UoWFactory,
     ),
 )

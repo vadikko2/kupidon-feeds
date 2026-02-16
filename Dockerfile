@@ -41,7 +41,6 @@ RUN pip install --no-cache-dir -r /code/requirements.txt --root-user-action=igno
 COPY ./src/ /code/src/
 
 EXPOSE 80
-EXPOSE 443
 
 # Main command to start the container
 CMD ["uvicorn", "--app-dir", "/code/src/", "presentation.api.main:app", "--workers", "4", "--host", "0.0.0.0", "--port", "80"]

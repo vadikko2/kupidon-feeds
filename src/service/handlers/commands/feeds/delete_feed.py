@@ -23,10 +23,7 @@ class DeleteFeedHandler(cqrs.RequestHandler[delete_feed_model.DeleteFeed, None])
     async def handle(self, request: delete_feed_model.DeleteFeed) -> None:
         async with self.uow:
             feed = await self.uow.feeds_repository.get_by_id(request.feed_id)
-            if feed is None:
-                raise exceptions.FeedNotFound(feed_id=request.feed_id)
-
-            if feed.account_id != request.account_id:
+            if feed is not None and feed.account_id != request.account_id:
                 raise exceptions.UserDoesNotOwnFeed(
                     account_id=request.account_id,
                     feed_id=request.feed_id,

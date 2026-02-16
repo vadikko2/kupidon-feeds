@@ -261,11 +261,10 @@ async def patch_feed(
 @router.delete(
     "/{feed_id}",
     status_code=fastapi.status.HTTP_204_NO_CONTENT,
-    description="Delete feed",
+    description="Delete feed (idempotent: no error if feed does not exist)",
     responses=registry.get_exception_responses(
         service_exceptions.GetUserIdError,
         service_exceptions.UnauthorizedError,
-        service_exceptions.FeedNotFound,
         service_exceptions.UserDoesNotOwnFeed,
     ),
 )

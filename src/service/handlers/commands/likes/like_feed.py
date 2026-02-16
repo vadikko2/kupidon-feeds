@@ -29,9 +29,7 @@ class LikeFeedHandler(
         request: like_feed_model.LikeFeed,
     ) -> like_feed_model.LikeFeedResponse:
         async with self.uow:
-            # Проверяем, существует ли feed
-            feed = await self.uow.feeds_repository.get_by_id(request.feed_id)
-            if feed is None:
+            if not await self.uow.feeds_repository.exists(request.feed_id):
                 raise exceptions.FeedNotFound(feed_id=request.feed_id)
 
             # Проверяем, есть ли уже лайк от этого пользователя (идемпотентность)

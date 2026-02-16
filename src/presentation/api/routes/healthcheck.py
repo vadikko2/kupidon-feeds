@@ -7,12 +7,22 @@ import redis.asyncio as rc
 from fastapi import responses
 
 from infrastructure.cache import redis
+from infrastructure.persistent.postgres import connection as postgres_connection
 from presentation.api import limiter, settings
 from presentation.api.schemas import healthcheck as healthcheck_response
 
 logger = logging.getLogger(__name__)
 
 router = fastapi.APIRouter()
+
+
+async def _check_postgres() -> None:
+    pool = await postgres_connection.get_pool()
+    conn = await pool.acquire()
+    try:
+        await conn.fetchval("SELECT 1")
+    finally:
+        await pool.release(conn)
 
 
 @router.get(
@@ -40,6 +50,7 @@ async def healthcheck(
     """
     checks = {
         "redis": functools.partial(redis_client.ping),
+        "postgres": _check_postgres,
     }
     check_results = []
     healthy = True

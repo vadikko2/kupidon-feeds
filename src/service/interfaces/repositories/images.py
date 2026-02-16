@@ -30,7 +30,6 @@ class IImageRepository(abc.ABC):
     @abc.abstractmethod
     async def update(self, *image: images.Image):
         """
-        Updates images by id
-        :raises service.exceptions.ImageNotFound:
+        Updates images by id. Idempotent: does not raise if an image does not exist.
         """
         raise NotImplementedError

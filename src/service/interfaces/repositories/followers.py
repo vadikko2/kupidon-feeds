@@ -39,9 +39,9 @@ class IFollowersRepository(abc.ABC):
         account_id: str,
         limit: int = 100,
         offset: int = 0,
-    ) -> list[follower_entity.Follower]:
+    ) -> tuple[list[follower_entity.Follower], int]:
         """
-        Returns followers
+        Returns (followers, total_count) in one query.
         """
         raise NotImplementedError
 
@@ -51,9 +51,9 @@ class IFollowersRepository(abc.ABC):
         account_id: str,
         limit: int = 100,
         offset: int = 0,
-    ) -> list[follower_entity.Follower]:
+    ) -> tuple[list[follower_entity.Follower], int]:
         """
-        Returns following
+        Returns (following, total_count) in one query.
         """
         raise NotImplementedError
 

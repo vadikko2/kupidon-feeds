@@ -25,16 +25,11 @@ class GetFollowingHandler(
         request: get_following_model.GetFollowing,
     ) -> get_following_model.GetFollowingResponse:
         async with self.uow:
-            # Получаем подписки с пагинацией на уровне БД
-            following = await self.uow.followers_repository.get_following(
+            following, total_count = await self.uow.followers_repository.get_following(
                 request.account_id,
                 limit=request.limit,
                 offset=request.offset,
             )
-            total_count = await self.uow.followers_repository.count_following(
-                request.account_id,
-            )
-
             return get_following_model.GetFollowingResponse(
                 account_id=request.account_id,
                 following=following,

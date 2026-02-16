@@ -1,51 +1,26 @@
-import pydantic
 import pydantic_settings
+from pydantic import Field
 import dotenv
 
 dotenv.load_dotenv()
 
 
-class DatabaseSettings(pydantic_settings.BaseSettings):
-    """
-    Database connection settings
-    """
+class PostgresSettings(pydantic_settings.BaseSettings):
+    """Postgres connection settings for asyncpg."""
 
-    URL: str = pydantic.Field(
-        default="postgresql+asyncpg://user:password@localhost:5432/dbname",
-        description="Database connection URL",
-    )
-    POOL_SIZE: int = pydantic.Field(
-        default=5,
-        ge=1,
-        le=100,
-        description="Number of connections to maintain in the pool",
-    )
-    MAX_OVERFLOW: int = pydantic.Field(
-        default=10,
-        ge=0,
-        le=100,
-        description="Maximum number of connections to allow in addition to pool_size",
-    )
-    POOL_TIMEOUT: int = pydantic.Field(
-        default=30,
-        ge=1,
-        description="Number of seconds to wait before giving up on getting a connection from the pool",
-    )
-    POOL_RECYCLE: int = pydantic.Field(
-        default=3600,
-        ge=1,
-        description="Number of seconds after which a connection is recreated",
-    )
-    POOL_PRE_PING: bool = pydantic.Field(
-        default=True,
-        description="Enable connection health checks",
-    )
-    ECHO: bool = pydantic.Field(
-        default=False,
-        description="Enable SQL query logging",
-    )
+    HOSTNAME: str = Field(default="localhost")
+    PORT: int = Field(default=5432)
+    DATABASE: str = Field(default="feeds")
+    USER: str = Field(default="postgres")
+    PASSWORD: str = Field(default="postgres")
+    POOL_MIN_SIZE: int = Field(default=5, description="Min connections in pool")
+    POOL_MAX_SIZE: int = Field(default=20, description="Max connections in pool")
 
-    model_config = pydantic_settings.SettingsConfigDict(env_prefix="DATABASE_")
+    @property
+    def dsn(self) -> str:
+        return f"postgresql://{self.USER}:{self.PASSWORD}@{self.HOSTNAME}:{self.PORT}/{self.DATABASE}"
+
+    model_config = pydantic_settings.SettingsConfigDict(env_prefix="POSTGRES_")
 
 
-database_settings = DatabaseSettings()
+postgres_settings = PostgresSettings()

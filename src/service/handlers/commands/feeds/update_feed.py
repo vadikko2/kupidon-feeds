@@ -47,19 +47,18 @@ class UpdateFeedHandler(
                 difference = set(request.images) - set([im.image_id for im in images])
                 raise exceptions.ImageNotFound(image_id=difference.pop())
 
-            already_bound_images = await self.uow.images_repository.get_many(
-                *[im.image_id for im in feed.images],
-            )
+            request_image_ids = {im.image_id for im in images}
+            bound_image_ids = {im.image_id for im in feed.images}
 
             images_for_unbinding = [
                 im.unbound_from_feed()
-                for im in already_bound_images
-                if im not in images
+                for im in feed.images
+                if im.image_id not in request_image_ids
             ]
             images_for_binding = [
                 im.bound_to_feed(feed.feed_id)
                 for im in images
-                if im not in already_bound_images
+                if im.image_id not in bound_image_ids
             ]
             new_feed = feed_entity.Feed(
                 feed_id=feed.feed_id,
