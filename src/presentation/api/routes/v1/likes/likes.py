@@ -48,7 +48,7 @@ async def like(
         ),
     )
     return response.Response(
-        result=responses_schema.Like(
+        result=responses_schema.Like.model_construct(
             account_id=result.like.account_id,
             feed_id=result.like.feed_id,
             liked_at=result.like.liked_at,
@@ -120,10 +120,10 @@ async def get_likes(
         ),
     )
     return response.Response[pagination.Pagination[responses_schema.Like]](
-        result=pagination.Pagination[responses_schema.Like](
+        result=pagination.Pagination.model_construct(
             url="",
             base_items=[
-                responses_schema.Like(
+                responses_schema.Like.model_construct(
                     account_id=like.account_id,
                     feed_id=like.feed_id,
                     liked_at=like.liked_at,

@@ -1,20 +1,20 @@
+import dataclasses
 import datetime
 import uuid
 
-import pydantic
 
-
-class Image(pydantic.BaseModel, frozen=True):
+@dataclasses.dataclass(frozen=True)
+class Image:
     """
     Image entity
     """
 
-    image_id: pydantic.UUID4
-    feed_id: pydantic.UUID4 | None = None
+    image_id: uuid.UUID
     uploader: str
     url: str
+    feed_id: uuid.UUID | None = None
     blurhash: str | None = None
-    uploaded_at: pydantic.NaiveDatetime = pydantic.Field(
+    uploaded_at: datetime.datetime = dataclasses.field(
         default_factory=datetime.datetime.now,
     )
     order: int = 0

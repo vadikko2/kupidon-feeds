@@ -1,11 +1,11 @@
 import abc
+import dataclasses
 
-import pydantic
 
-
-class Image(pydantic.BaseModel):
-    image: bytes = pydantic.Field(exclude=True)
-    filename: str
+@dataclasses.dataclass
+class Image:
+    image: bytes = dataclasses.field(default=b"", repr=False)
+    filename: str = dataclasses.field(default="")
 
 
 class ImagesStorage(abc.ABC):

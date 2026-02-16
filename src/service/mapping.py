@@ -1,4 +1,4 @@
-from cqrs import events, requests
+from cqrs import EventMap, RequestMap
 
 from service.handlers.commands.feeds import (
     delete_feed as delete_feed_handler,
@@ -48,7 +48,7 @@ from service.models.queries.followers import (
 from service.models.queries.likes import get_likes as get_likes_model
 
 
-def init_requests(mapper: requests.RequestMap) -> None:
+def init_requests(mapper: RequestMap) -> None:
     # commands
     mapper.bind(post_feed_model.PostFeed, post_feed_handler.PostFeedHandler)
     mapper.bind(upload_image_model.UploadImage, upload_image_handler.UploadImageHandler)
@@ -86,5 +86,5 @@ def init_requests(mapper: requests.RequestMap) -> None:
     )
 
 
-def init_events(mapper: events.EventMap) -> None:
+def init_events(mapper: EventMap) -> None:
     pass

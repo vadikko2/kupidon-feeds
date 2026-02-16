@@ -46,11 +46,17 @@ async def healthcheck(
     for name, check in checks.items():
         try:
             await check()
-            check_results.append(healthcheck_response.Check(name=name, healthy=True))
+            check_results.append(
+                healthcheck_response.Check.model_construct(name=name, healthy=True),
+            )
         except Exception as error:
             healthy = False
             check_results.append(
-                healthcheck_response.Check(name=name, healthy=False, error=str(error)),
+                healthcheck_response.Check.model_construct(
+                    name=name,
+                    healthy=False,
+                    error=str(error),
+                ),
             )
             logger.error(f"{name} is unhealthy: {error}")
 
@@ -63,7 +69,7 @@ async def healthcheck(
     return responses.JSONResponse(
         status_code=status_code,
         content=orjson.loads(
-            healthcheck_response.Healthcheck(
+            healthcheck_response.Healthcheck.model_construct(
                 checks=check_results,
             ).model_dump_json(),
         ),

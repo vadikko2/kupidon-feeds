@@ -1,7 +1,10 @@
-import pydantic
+import dataclasses
+import datetime
+import uuid
 
 
-class Like(pydantic.BaseModel, frozen=True):
-    feed_id: pydantic.UUID4 = pydantic.Field(description="Feed id")
-    account_id: pydantic.StrictStr = pydantic.Field(description="Account id")
-    liked_at: pydantic.NaiveDatetime = pydantic.Field(description="Liked at")
+@dataclasses.dataclass(frozen=True)
+class Like:
+    feed_id: uuid.UUID
+    account_id: str
+    liked_at: datetime.datetime

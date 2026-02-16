@@ -1,12 +1,16 @@
+import dataclasses
+
 import cqrs
 
 
-class GetAccountInfo(cqrs.Request):
+@dataclasses.dataclass
+class GetAccountInfo(cqrs.DCRequest):
     account_id: str
 
 
-class GetAccountInfoResponse(cqrs.Response):
+@dataclasses.dataclass
+class GetAccountInfoResponse(cqrs.DCResponse):
     account_id: str
-    followers_count: int
-    following_count: int
-    feeds_count: int
+    followers_count: int = 0
+    following_count: int = 0
+    feeds_count: int = 0

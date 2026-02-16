@@ -1,7 +1,10 @@
+import dataclasses
+import uuid
+
 import cqrs
-import pydantic
 
 
-class UnlikeFeed(cqrs.Request):
-    feed_id: pydantic.UUID4
+@dataclasses.dataclass
+class UnlikeFeed(cqrs.DCRequest):
+    feed_id: uuid.UUID
     account_id: str

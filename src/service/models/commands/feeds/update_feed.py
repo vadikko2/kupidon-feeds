@@ -1,16 +1,19 @@
+import dataclasses
+import uuid
+
 import cqrs
-import pydantic
 
 from domain.entities import feed as feed_entity
 
 
-class UpdateFeed(cqrs.Request):
+@dataclasses.dataclass
+class UpdateFeed(cqrs.DCRequest):
     account_id: str
-    feed_id: pydantic.UUID4
+    feed_id: uuid.UUID
     text: str
+    images: list[uuid.UUID] = dataclasses.field(default_factory=list)
 
-    images: list[pydantic.UUID4]
 
-
-class UpdateFeedResponse(cqrs.Response):
+@dataclasses.dataclass
+class UpdateFeedResponse(cqrs.DCResponse):
     feed: feed_entity.Feed

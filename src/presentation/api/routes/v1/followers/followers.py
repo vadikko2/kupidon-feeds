@@ -52,7 +52,7 @@ async def follow(
         ),
     )
     return response.Response(
-        result=responses_schema.Follower(
+        result=responses_schema.Follower.model_construct(
             follower=account_id,
             follow_for=body.account_id,
             followed_at=result.follower.followed_at,
@@ -91,10 +91,10 @@ async def get_followers(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination[responses_schema.Follower](
+        result=pagination.Pagination.model_construct(
             url="",
             base_items=[
-                responses_schema.Follower(
+                responses_schema.Follower.model_construct(
                     follower=follower.follower,
                     follow_for=follower.follow_for,
                     followed_at=follower.followed_at,
@@ -139,10 +139,10 @@ async def get_follows(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination[responses_schema.Follower](
+        result=pagination.Pagination.model_construct(
             url="",
             base_items=[
-                responses_schema.Follower(
+                responses_schema.Follower.model_construct(
                     follower=follower.follower,
                     follow_for=follower.follow_for,
                     followed_at=follower.followed_at,
@@ -206,7 +206,7 @@ async def get_account_info(
         ),
     )
     return response.Response(
-        result=responses_schema.AccountInfo(
+        result=responses_schema.AccountInfo.model_construct(
             account_id=result.account_id,
             followers_count=result.followers_count,
             following_count=result.following_count,

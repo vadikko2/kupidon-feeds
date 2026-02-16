@@ -1,11 +1,15 @@
+import dataclasses
+import uuid
+
 import cqrs
-import pydantic
 
 
-class ViewFeeds(cqrs.Request):
-    feed_ids: list[pydantic.UUID4]
+@dataclasses.dataclass
+class ViewFeeds(cqrs.DCRequest):
+    feed_ids: list[uuid.UUID]
     account_id: str
 
 
-class ViewFeedsResponse(cqrs.Response):
+@dataclasses.dataclass
+class ViewFeedsResponse(cqrs.DCResponse):
     pass

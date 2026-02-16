@@ -1,8 +1,9 @@
-import pydantic
+import dataclasses
+import datetime
 
 
-class Follower(pydantic.BaseModel, frozen=True):
+@dataclasses.dataclass(frozen=True)
+class Follower:
     follower: str
     follow_for: str
-
-    followed_at: pydantic.NaiveDatetime
+    followed_at: datetime.datetime

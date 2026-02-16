@@ -46,7 +46,7 @@ async def upload_image(
     )
 
     return response.Response(
-        result=responses_schema.Image(
+        result=responses_schema.Image.model_construct(
             uuid=result.image.image_id,
             url=result.image.url,
             blurhash=result.image.blurhash,

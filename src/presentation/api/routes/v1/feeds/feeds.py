@@ -53,7 +53,7 @@ async def post_feed(
         ),
     )
     return response.Response(
-        result=responses_schema.Feed(
+        result=responses_schema.Feed.model_construct(
             uuid=result.feed.feed_id,
             account_id=account_id,
             has_followed=False,
@@ -61,8 +61,8 @@ async def post_feed(
             updated_at=result.feed.updated_at,
             text=body.text,
             images=[
-                responses_schema.OrderedImage(
-                    image=responses_schema.Image(
+                responses_schema.OrderedImage.model_construct(
+                    image=responses_schema.Image.model_construct(
                         uuid=image.image_id,
                         url=image.url,
                         blurhash=image.blurhash,
@@ -102,9 +102,9 @@ async def get_feeds(
     )
 
     return response.Response[responses_schema.Feeds](
-        result=responses_schema.Feeds(
+        result=responses_schema.Feeds.model_construct(
             items=[
-                responses_schema.Feed(
+                responses_schema.Feed.model_construct(
                     uuid=feed.feed_id,
                     account_id=feed.account_id,
                     has_followed=feed.has_followed,
@@ -113,8 +113,8 @@ async def get_feeds(
                     updated_at=feed.updated_at,
                     text=feed.text,
                     images=[
-                        responses_schema.OrderedImage(
-                            image=responses_schema.Image(
+                        responses_schema.OrderedImage.model_construct(
+                            image=responses_schema.Image.model_construct(
                                 uuid=image.image_id,
                                 url=image.url,
                                 blurhash=image.blurhash,
@@ -167,19 +167,20 @@ async def get_account_feeds(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Feed]](
-        result=pagination.Pagination[responses_schema.Feed](
+        result=pagination.Pagination.model_construct(
             url="",
             base_items=[
-                responses_schema.Feed(
+                responses_schema.Feed.model_construct(
                     uuid=feed.feed_id,
                     account_id=account_id,
                     has_followed=feed.has_followed,
+                    has_liked=feed.has_liked,
                     created_at=feed.created_at,
                     updated_at=feed.updated_at,
                     text=feed.text,
                     images=[
-                        responses_schema.OrderedImage(
-                            image=responses_schema.Image(
+                        responses_schema.OrderedImage.model_construct(
+                            image=responses_schema.Image.model_construct(
                                 uuid=image.image_id,
                                 url=image.url,
                                 blurhash=image.blurhash,
@@ -233,7 +234,7 @@ async def patch_feed(
         ),
     )
     return response.Response(
-        result=responses_schema.Feed(
+        result=responses_schema.Feed.model_construct(
             uuid=result.feed.feed_id,
             account_id=result.feed.account_id,
             has_followed=result.feed.has_followed,
@@ -241,8 +242,8 @@ async def patch_feed(
             updated_at=result.feed.updated_at,
             text=body.text,
             images=[
-                responses_schema.OrderedImage(
-                    image=responses_schema.Image(
+                responses_schema.OrderedImage.model_construct(
+                    image=responses_schema.Image.model_construct(
                         uuid=image.image_id,
                         url=image.url,
                         blurhash=image.blurhash,

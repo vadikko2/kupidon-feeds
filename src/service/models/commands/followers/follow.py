@@ -1,12 +1,16 @@
+import dataclasses
+
 import cqrs
 
 from domain.entities import follower as follower_entity
 
 
-class Follow(cqrs.Request):
+@dataclasses.dataclass
+class Follow(cqrs.DCRequest):
     follower: str
     follow_for: str
 
 
-class FollowResponse(cqrs.Response):
+@dataclasses.dataclass
+class FollowResponse(cqrs.DCResponse):
     follower: follower_entity.Follower

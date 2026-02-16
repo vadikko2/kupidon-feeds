@@ -1,14 +1,17 @@
+import dataclasses
+
 import cqrs
-import pydantic
 
 from domain.entities import images
 
 
-class UploadImage(cqrs.Request):
+@dataclasses.dataclass
+class UploadImage(cqrs.DCRequest):
     uploader: str
-    image: bytes = pydantic.Field(exclude=True)
-    filename: str | None
+    image: bytes = dataclasses.field(default=b"", repr=False)
+    filename: str | None = None
 
 
-class UploadImageResponse(cqrs.Response):
+@dataclasses.dataclass
+class UploadImageResponse(cqrs.DCResponse):
     image: images.Image

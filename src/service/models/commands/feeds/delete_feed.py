@@ -1,7 +1,10 @@
+import dataclasses
+import uuid
+
 import cqrs
-import pydantic
 
 
-class DeleteFeed(cqrs.Request):
+@dataclasses.dataclass
+class DeleteFeed(cqrs.DCRequest):
     account_id: str
-    feed_id: pydantic.UUID4
+    feed_id: uuid.UUID

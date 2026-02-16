@@ -1,13 +1,17 @@
+import dataclasses
+import uuid
+
 import cqrs
-import pydantic
 
 from domain.entities import like as like_entity
 
 
-class LikeFeed(cqrs.Request):
-    feed_id: pydantic.UUID4
+@dataclasses.dataclass
+class LikeFeed(cqrs.DCRequest):
+    feed_id: uuid.UUID
     account_id: str
 
 
-class LikeFeedResponse(cqrs.Response):
+@dataclasses.dataclass
+class LikeFeedResponse(cqrs.DCResponse):
     like: like_entity.Like
