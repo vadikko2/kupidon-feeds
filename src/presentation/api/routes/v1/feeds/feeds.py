@@ -167,7 +167,7 @@ async def get_account_feeds(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Feed]](
-        result=pagination.Pagination.model_construct(
+        result=pagination.Pagination[responses_schema.Feed].model_construct(
             url="",
             base_items=[
                 responses_schema.Feed.model_construct(

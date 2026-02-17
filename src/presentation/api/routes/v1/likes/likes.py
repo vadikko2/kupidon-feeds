@@ -120,7 +120,7 @@ async def get_likes(
         ),
     )
     return response.Response[pagination.Pagination[responses_schema.Like]](
-        result=pagination.Pagination.model_construct(
+        result=pagination.Pagination[responses_schema.Like].model_construct(
             url="",
             base_items=[
                 responses_schema.Like.model_construct(

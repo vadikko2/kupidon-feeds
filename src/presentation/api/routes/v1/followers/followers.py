@@ -91,7 +91,7 @@ async def get_followers(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination.model_construct(
+        result=pagination.Pagination[responses_schema.Follower].model_construct(
             url="",
             base_items=[
                 responses_schema.Follower.model_construct(
@@ -139,7 +139,7 @@ async def get_follows(
     )
 
     return response.Response[pagination.Pagination[responses_schema.Follower]](
-        result=pagination.Pagination.model_construct(
+        result=pagination.Pagination[responses_schema.Follower].model_construct(
             url="",
             base_items=[
                 responses_schema.Follower.model_construct(
