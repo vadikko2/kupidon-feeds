@@ -25,6 +25,42 @@ _FEED_SELECT = """
     FROM feeds f
 """
 
+# Optimized for get_by_ids / get_by_id: JOINs instead of correlated subqueries.
+# Params: $1 = feed_ids (list[uuid]), $2 = current_account_id (str | None)
+_FEED_SELECT_BY_IDS = """
+    SELECT
+        f.feed_id,
+        f.account_id,
+        f.created_at,
+        f.updated_at,
+        f.text,
+        COALESCE(l.cnt, 0)::int AS likes_count,
+        COALESCE(v.cnt, 0)::int AS views_count,
+        CASE WHEN $2::text IS NULL THEN false ELSE (fl.follower IS NOT NULL) END AS has_followed,
+        CASE WHEN $2::text IS NULL THEN false ELSE (my_likes.feed_id IS NOT NULL) END AS has_liked
+    FROM feeds f
+    LEFT JOIN (
+        SELECT feed_id, count(*)::int AS cnt
+        FROM likes
+        WHERE feed_id = ANY($1::uuid[])
+        GROUP BY feed_id
+    ) l ON f.feed_id = l.feed_id
+    LEFT JOIN (
+        SELECT feed_id, count(*)::int AS cnt
+        FROM views
+        WHERE feed_id = ANY($1::uuid[])
+        GROUP BY feed_id
+    ) v ON f.feed_id = v.feed_id
+    LEFT JOIN followers fl
+        ON fl.follower = $2 AND fl.follow_for = f.account_id
+    LEFT JOIN (
+        SELECT feed_id
+        FROM likes
+        WHERE feed_id = ANY($1::uuid[]) AND account_id = $2
+    ) my_likes ON f.feed_id = my_likes.feed_id
+    WHERE f.feed_id = ANY($1::uuid[])
+"""
+
 # Same as _FEED_SELECT but with total_count for pagination (one query for list + total)
 _FEED_SELECT_WITH_TOTAL = (
     _FEED_SELECT.strip().removesuffix("FROM feeds f")
@@ -169,16 +205,16 @@ class PostgresFeedsRepository(BaseRepository, feeds_interface.IFeedsRepository):
         feed_id: uuid.UUID,
         current_account_id: str | None = None,
     ) -> feed_entity.Feed | None:
-        row = await self.conn.fetchrow(
-            _FEED_SELECT + " WHERE f.feed_id = $1",
-            feed_id,
+        rows = await self.conn.fetch(
+            _FEED_SELECT_BY_IDS,
+            [feed_id],
             current_account_id,
         )
-        if row is None:
+        if not rows:
             return None
         images_by_feed = await self._fetch_images_by_feed_ids([feed_id])
         images = images_by_feed.get(feed_id, [])
-        return _row_to_feed(row, images)
+        return _row_to_feed(rows[0], images)
 
     async def get_by_ids(
         self,
@@ -188,7 +224,7 @@ class PostgresFeedsRepository(BaseRepository, feeds_interface.IFeedsRepository):
         if not feed_ids:
             return []
         rows = await self.conn.fetch(
-            _FEED_SELECT + " WHERE f.feed_id = ANY($1::uuid[])",
+            _FEED_SELECT_BY_IDS,
             feed_ids,
             current_account_id,
         )
